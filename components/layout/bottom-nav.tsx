@@ -14,7 +14,9 @@ import {
   Settings,
   MoreHorizontal,
   X,
+  LogOut,
 } from "lucide-react"
+import { logout } from "@/app/(auth)/actions"
 import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Dialog,
@@ -160,6 +162,20 @@ export function MobileBottomNav() {
           <div className="flex items-center justify-between pt-3 border-t border-border/60 text-xs">
             <span className="text-muted-foreground font-mono">Appearance</span>
             <ThemeToggle />
+          </div>
+
+          <div className="pt-2 border-t border-border/60">
+            <button
+              type="button"
+              onClick={() => {
+                setMoreOpen(false)
+                logout()
+              }}
+              className="flex w-full items-center gap-2 p-2 rounded-lg text-xs font-mono text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+            >
+              <LogOut className="size-4" />
+              <span>Sign out of MyOS</span>
+            </button>
           </div>
         </DialogContent>
       </Dialog>

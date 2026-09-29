@@ -4,9 +4,12 @@ import {
   Globe,
   Keyboard,
   Moon,
+  LogOut,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { ThemeSelector } from "@/components/settings/theme-selector"
+import { logout } from "@/app/(auth)/actions"
 
 export const metadata = {
   title: "Settings",
@@ -99,6 +102,24 @@ export default function SettingsPage() {
               <div className="text-[10px] text-muted-foreground uppercase">Service Role Key</div>
               <div className="font-semibold text-emerald-500 mt-0.5">Server Only (Hidden)</div>
             </div>
+          </div>
+
+          <div className="pt-3 border-t border-border/40 flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold">Active Session</span>
+              <span className="text-[11px] font-mono text-muted-foreground">Terminate session and clear browser credentials</span>
+            </div>
+            <form action={logout}>
+              <Button
+                variant="outline"
+                size="sm"
+                type="submit"
+                className="gap-1.5 font-mono text-xs text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+              >
+                <LogOut className="size-3.5" />
+                <span>Sign out</span>
+              </Button>
+            </form>
           </div>
         </section>
 

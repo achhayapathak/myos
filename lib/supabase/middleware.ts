@@ -1,10 +1,39 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
+import type { User } from "@supabase/supabase-js"
 
 /**
- * Updates the user's Supabase auth session in Next.js middleware.
+ * Determines whether a route requires redirection based on the user's authentication state.
+ *
+ * @param pathname Current request path
+ * @param user The authenticated user object or null
+ * @returns The destination redirect path, or null if access is granted
+ */
+export function getAuthRedirect(pathname: string, user: User | null): string | null {
+  const isAuthRoute =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/auth/callback")
+
+  // Unauthenticated user attempting to access protected route
+  if (!user && !isAuthRoute) {
+    return "/login"
+  }
+
+  // Authenticated user attempting to access login or forgot-password
+  if (user && (pathname === "/login" || pathname === "/forgot-password")) {
+    return "/today"
+  }
+
+  return null
+}
+
+/**
+ * Updates the user's Supabase auth session in Next.js middleware / proxy.
  * Ensures expired auth tokens are refreshed and the new session cookie is set
- * on both the incoming request headers and outgoing response headers.
+ * on both the incoming request headers and outgoing response headers,
+ * enforcing route protection for unauthenticated users.
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -40,7 +69,23 @@ export async function updateSession(request: NextRequest) {
 
   // IMPORTANT: Do not run code between createServerClient and supabase.auth.getUser().
   // Calling getUser() validates the JWT with the Supabase Auth server and refreshes expired tokens.
-  await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const redirectPath = getAuthRedirect(request.nextUrl.pathname, user)
+  if (redirectPath) {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = redirectPath
+    if (redirectPath === "/today") {
+      redirectUrl.search = ""
+    }
+    const redirectResponse = NextResponse.redirect(redirectUrl)
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return redirectResponse
+  }
 
   return supabaseResponse
 }

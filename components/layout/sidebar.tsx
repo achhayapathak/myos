@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils"
 import { NAV_ITEMS } from "@/components/layout/nav-items"
 import { useCommandPalette } from "@/components/command-palette"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Search, Terminal, ShieldCheck, Settings } from "lucide-react"
+import { Search, Terminal, ShieldCheck, Settings, LogOut } from "lucide-react"
+import { logout } from "@/app/(auth)/actions"
 
 export function DesktopSidebar() {
   const pathname = usePathname()
@@ -124,7 +125,7 @@ export function DesktopSidebar() {
           </span>
         </Link>
 
-        {/* User Status Bar */}
+        {/* User Status Bar & Logout */}
         <div className="flex items-center justify-between px-2 py-1.5 rounded-md bg-muted/40 border border-border/40 text-[11px] font-mono text-muted-foreground">
           <div className="flex items-center gap-1.5 truncate">
             <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
@@ -133,7 +134,18 @@ export function DesktopSidebar() {
               <span>Owner Session</span>
             </span>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={() => logout()}
+              title="Sign out of MyOS"
+              aria-label="Sign out"
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            >
+              <LogOut className="size-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </aside>

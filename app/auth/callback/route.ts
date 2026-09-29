@@ -4,24 +4,23 @@ import { createClient } from "@/lib/supabase/server"
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
-  const next = searchParams.get("next") ?? "/today"
+  const rawNext = searchParams.get("next")
+
+  // Strict open-redirect prevention:
+  // Must start with '/' and must NOT start with '//' or '/\'
+  let safeNext = "/today"
+  if (rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.startsWith("/\\")) {
+    safeNext = rawNext
+  }
 
   if (code) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      const forwardedHost = request.headers.get("x-forwarded-host")
-      const isLocalEnv = process.env.NODE_ENV === "development"
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
-      } else {
-        return NextResponse.redirect(`${origin}${next}`)
-      }
+      return NextResponse.redirect(new URL(safeNext, origin))
     }
   }
 
-  // Redirect to login with error query param if exchange fails
-  return NextResponse.redirect(`${origin}/login?error=Invalid+or+expired+recovery+code`)
+  // Redirect to login with standard error code if exchange fails
+  return NextResponse.redirect(new URL("/login?error=invalid_recovery_code", origin))
 }

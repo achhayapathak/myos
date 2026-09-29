@@ -43,8 +43,13 @@ export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // If Supabase environment variables are missing or default placeholders, pass through
+  // If Supabase environment variables are missing or default placeholders:
   if (!url || !anonKey || url.includes("placeholder-project")) {
+    if (process.env.NODE_ENV === "production") {
+      return new NextResponse("Service Configuration Error: Supabase credentials missing.", {
+        status: 500,
+      })
+    }
     return supabaseResponse
   }
 

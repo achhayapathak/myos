@@ -36,7 +36,7 @@ $$ LANGUAGE plpgsql;
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL UNIQUE DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   display_name TEXT,
   timezone TEXT NOT NULL DEFAULT 'Asia/Kolkata',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -76,7 +76,10 @@ CREATE TRIGGER set_profiles_updated_at
 
 -- Automatically create profile entry when a user is created in auth.users
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   INSERT INTO public.profiles (user_id, display_name)
   VALUES (
@@ -86,7 +89,7 @@ BEGIN
   ON CONFLICT (user_id) DO NOTHING;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
@@ -99,7 +102,7 @@ CREATE TRIGGER on_auth_user_created
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,
   status TEXT NOT NULL DEFAULT 'todo' CHECK (status IN ('todo', 'in_progress', 'completed', 'cancelled')),
@@ -149,7 +152,7 @@ CREATE TRIGGER set_tasks_updated_at
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.notes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   content TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -193,7 +196,7 @@ CREATE TRIGGER set_notes_updated_at
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,
   start_at TIMESTAMPTZ NOT NULL,
@@ -242,7 +245,7 @@ CREATE TRIGGER set_events_updated_at
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.pomodoro_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   type TEXT NOT NULL CHECK (type IN ('focus', 'short_break', 'long_break')),
   duration_seconds INTEGER NOT NULL CHECK (duration_seconds > 0),
   started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -291,7 +294,7 @@ CREATE TRIGGER set_pomodoro_sessions_updated_at
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.reminders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   remind_at TIMESTAMPTZ NOT NULL,
   completed BOOLEAN NOT NULL DEFAULT false,
@@ -337,7 +340,7 @@ CREATE TRIGGER set_reminders_updated_at
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.push_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   endpoint TEXT NOT NULL,
   p256dh TEXT NOT NULL,
   auth TEXT NOT NULL,

@@ -15,7 +15,16 @@ function LoginForm() {
   const [loading, setLoading] = React.useState(false)
 
   const errorParam = searchParams.get("error")
-  const errorMessage = formError ?? errorParam
+  const KNOWN_ERRORS: Record<string, string> = {
+    invalid_recovery_code: "The recovery code is invalid, expired, or has already been used.",
+    session_expired: "Your session has expired. Please sign in again.",
+    access_denied: "Access denied. Only the authorized owner may access this system.",
+    unauthorized: "Please sign in to access this page.",
+  }
+  const safeParamError = errorParam
+    ? KNOWN_ERRORS[errorParam] ?? "An error occurred during authentication."
+    : null
+  const errorMessage = formError ?? safeParamError
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()

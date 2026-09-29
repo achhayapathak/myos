@@ -51,14 +51,20 @@ describe("Database Schema & Migration Validation", () => {
       }
     })
 
-    it("ensures every user-owned table has user_id foreign key referencing auth.users", () => {
+    it("ensures every user-owned table has user_id foreign key referencing auth.users with DEFAULT auth.uid()", () => {
       for (const table of requiredTables) {
         const fkRegex = new RegExp(
-          `CREATE\\s+TABLE[\\s\\S]*?public\\.${table}[\\s\\S]*?user_id\\s+UUID\\s+NOT\\s+NULL[\\s\\S]*?REFERENCES\\s+auth\\.users\\(id\\)\\s+ON\\s+DELETE\\s+CASCADE`,
+          `CREATE\\s+TABLE[\\s\\S]*?public\\.${table}[\\s\\S]*?user_id\\s+UUID\\s+NOT\\s+NULL[\\s\\S]*?DEFAULT\\s+auth\\.uid\\(\\)[\\s\\S]*?REFERENCES\\s+auth\\.users\\(id\\)\\s+ON\\s+DELETE\\s+CASCADE`,
           "i"
         )
         expect(migrationContent).toMatch(fkRegex)
       }
+    })
+
+    it("pins search_path on handle_new_user SECURITY DEFINER function", () => {
+      expect(migrationContent).toMatch(
+        /CREATE\s+OR\s+REPLACE\s+FUNCTION\s+public\.handle_new_user\(\)[\s\S]*?SECURITY\s+DEFINER[\s\S]*?SET\s+search_path\s*=\s*public,\s*pg_temp/i
+      )
     })
 
     it("ensures created_at and updated_at timestamps exist on all tables", () => {

@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr"
+import type { Database } from "@/types/database"
 
 /**
  * Creates a Supabase client for use in Client Components (Browser).
@@ -15,5 +16,5 @@ export function createClient() {
     )
   }
 
-  return createBrowserClient(url, anonKey)
+  return createBrowserClient<Database>(url, anonKey)
 }

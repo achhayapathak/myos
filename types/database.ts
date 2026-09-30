@@ -15,7 +15,7 @@ export type TaskStatus = "todo" | "in_progress" | "completed" | "cancelled"
 export type TaskPriority = "low" | "medium" | "high"
 export type PomodoroType = "focus" | "short_break" | "long_break"
 
-export interface Profile {
+export type Profile = {
   id: string
   user_id: string
   display_name: string | null
@@ -24,16 +24,7 @@ export interface Profile {
   updated_at: string
 }
 
-export interface ProfileInsert {
-  id?: string
-  user_id: string
-  display_name?: string | null
-  timezone?: string
-  created_at?: string
-  updated_at?: string
-}
-
-export interface ProfileUpdate {
+export type ProfileInsert = {
   id?: string
   user_id?: string
   display_name?: string | null
@@ -42,7 +33,16 @@ export interface ProfileUpdate {
   updated_at?: string
 }
 
-export interface Task {
+export type ProfileUpdate = {
+  id?: string
+  user_id?: string
+  display_name?: string | null
+  timezone?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export type Task = {
   id: string
   user_id: string
   title: string
@@ -55,9 +55,9 @@ export interface Task {
   updated_at: string
 }
 
-export interface TaskInsert {
+export type TaskInsert = {
   id?: string
-  user_id: string
+  user_id?: string
   title: string
   description?: string | null
   status?: TaskStatus
@@ -68,7 +68,7 @@ export interface TaskInsert {
   updated_at?: string
 }
 
-export interface TaskUpdate {
+export type TaskUpdate = {
   id?: string
   user_id?: string
   title?: string
@@ -81,7 +81,7 @@ export interface TaskUpdate {
   updated_at?: string
 }
 
-export interface Note {
+export type Note = {
   id: string
   user_id: string
   title: string
@@ -90,16 +90,16 @@ export interface Note {
   updated_at: string
 }
 
-export interface NoteInsert {
+export type NoteInsert = {
   id?: string
-  user_id: string
+  user_id?: string
   title: string
   content?: string
   created_at?: string
   updated_at?: string
 }
 
-export interface NoteUpdate {
+export type NoteUpdate = {
   id?: string
   user_id?: string
   title?: string
@@ -108,7 +108,7 @@ export interface NoteUpdate {
   updated_at?: string
 }
 
-export interface Event {
+export type Event = {
   id: string
   user_id: string
   title: string
@@ -120,9 +120,9 @@ export interface Event {
   updated_at: string
 }
 
-export interface EventInsert {
+export type EventInsert = {
   id?: string
-  user_id: string
+  user_id?: string
   title: string
   description?: string | null
   start_at: string
@@ -132,7 +132,7 @@ export interface EventInsert {
   updated_at?: string
 }
 
-export interface EventUpdate {
+export type EventUpdate = {
   id?: string
   user_id?: string
   title?: string
@@ -144,7 +144,7 @@ export interface EventUpdate {
   updated_at?: string
 }
 
-export interface PomodoroSession {
+export type PomodoroSession = {
   id: string
   user_id: string
   type: PomodoroType
@@ -156,9 +156,9 @@ export interface PomodoroSession {
   updated_at: string
 }
 
-export interface PomodoroSessionInsert {
+export type PomodoroSessionInsert = {
   id?: string
-  user_id: string
+  user_id?: string
   type: PomodoroType
   duration_seconds: number
   started_at?: string
@@ -168,7 +168,7 @@ export interface PomodoroSessionInsert {
   updated_at?: string
 }
 
-export interface PomodoroSessionUpdate {
+export type PomodoroSessionUpdate = {
   id?: string
   user_id?: string
   type?: PomodoroType
@@ -180,7 +180,7 @@ export interface PomodoroSessionUpdate {
   updated_at?: string
 }
 
-export interface Reminder {
+export type Reminder = {
   id: string
   user_id: string
   title: string
@@ -190,9 +190,9 @@ export interface Reminder {
   updated_at: string
 }
 
-export interface ReminderInsert {
+export type ReminderInsert = {
   id?: string
-  user_id: string
+  user_id?: string
   title: string
   remind_at: string
   completed?: boolean
@@ -200,7 +200,7 @@ export interface ReminderInsert {
   updated_at?: string
 }
 
-export interface ReminderUpdate {
+export type ReminderUpdate = {
   id?: string
   user_id?: string
   title?: string
@@ -210,7 +210,7 @@ export interface ReminderUpdate {
   updated_at?: string
 }
 
-export interface PushSubscription {
+export type PushSubscription = {
   id: string
   user_id: string
   endpoint: string
@@ -220,9 +220,9 @@ export interface PushSubscription {
   updated_at: string
 }
 
-export interface PushSubscriptionInsert {
+export type PushSubscriptionInsert = {
   id?: string
-  user_id: string
+  user_id?: string
   endpoint: string
   p256dh: string
   auth: string
@@ -230,7 +230,7 @@ export interface PushSubscriptionInsert {
   updated_at?: string
 }
 
-export interface PushSubscriptionUpdate {
+export type PushSubscriptionUpdate = {
   id?: string
   user_id?: string
   endpoint?: string
@@ -240,53 +240,60 @@ export interface PushSubscriptionUpdate {
   updated_at?: string
 }
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
         Row: Profile
         Insert: ProfileInsert
         Update: ProfileUpdate
+        Relationships: []
       }
       tasks: {
         Row: Task
         Insert: TaskInsert
         Update: TaskUpdate
+        Relationships: []
       }
       notes: {
         Row: Note
         Insert: NoteInsert
         Update: NoteUpdate
+        Relationships: []
       }
       events: {
         Row: Event
         Insert: EventInsert
         Update: EventUpdate
+        Relationships: []
       }
       pomodoro_sessions: {
         Row: PomodoroSession
         Insert: PomodoroSessionInsert
         Update: PomodoroSessionUpdate
+        Relationships: []
       }
       reminders: {
         Row: Reminder
         Insert: ReminderInsert
         Update: ReminderUpdate
+        Relationships: []
       }
       push_subscriptions: {
         Row: PushSubscription
         Insert: PushSubscriptionInsert
         Update: PushSubscriptionUpdate
+        Relationships: []
       }
     }
     Views: Record<string, never>
     Functions: {
       update_updated_at_column: {
-        Args: Record<PropertyKey, never>
+        Args: Record<string, unknown>
         Returns: unknown
       }
       handle_new_user: {
-        Args: Record<PropertyKey, never>
+        Args: Record<string, unknown>
         Returns: unknown
       }
     }

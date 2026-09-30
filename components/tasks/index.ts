@@ -1,0 +1,5 @@
+export { TasksView } from "./tasks-view"
+export { TaskItemCard } from "./task-item-card"
+export { TaskFormDialog } from "./task-form-dialog"
+export { TaskFiltersBar } from "./task-filters-bar"
+export { TaskShortcutsDialog } from "./task-shortcuts-dialog"

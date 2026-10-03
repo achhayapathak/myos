@@ -1,0 +1,491 @@
+"use client"
+
+import * as React from "react"
+import {
+  Play,
+  RotateCcw,
+  Coffee,
+  CheckCircle,
+  AlertCircle,
+  X,
+  Radio,
+  Timer,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import type { PomodoroType, PomodoroSession } from "@/types/database"
+import type { FocusPageData, ActivePomodoroSession } from "@/lib/focus/data"
+import {
+  DEFAULT_DURATIONS,
+  calculateRemainingSeconds,
+  isSessionCompleted,
+  type PomodoroState,
+} from "@/lib/focus/timer-utils"
+import {
+  startPomodoroSession,
+  completePomodoroSession,
+  cancelPomodoroSession,
+  associateTaskWithSession,
+} from "@/app/(app)/focus/actions"
+import { toggleTaskStatus } from "@/app/(app)/tasks/actions"
+import { PomodoroTimerDisplay } from "./pomodoro-timer-display"
+import { TaskAssociationSelector } from "./task-association-selector"
+import { SessionStats } from "./session-stats"
+import { cn } from "@/lib/utils"
+
+/**
+ * Plays a clean synthesizer chime when a focus session completes.
+ */
+function playChime() {
+  try {
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    if (!AudioContextClass) return
+
+    const ctx = new AudioContextClass()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+
+    osc.type = "sine"
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime) // D5
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3) // A5
+
+    gain.gain.setValueAtTime(0.15, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8)
+
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+
+    osc.start()
+    osc.stop(ctx.currentTime + 0.8)
+  } catch {
+    // Ignore if audio permissions or background audio blocked
+  }
+}
+
+/**
+ * Subscribes to time ticks and wake-up events (tab visibility, focus, network)
+ * without drift or JS throttling issues.
+ */
+function subscribeTimer(callback: () => void) {
+  const interval = setInterval(callback, 500)
+  const onWake = () => callback()
+
+  document.addEventListener("visibilitychange", onWake)
+  window.addEventListener("focus", onWake)
+  window.addEventListener("online", onWake)
+
+  return () => {
+    clearInterval(interval)
+    document.removeEventListener("visibilitychange", onWake)
+    window.removeEventListener("focus", onWake)
+    window.removeEventListener("online", onWake)
+  }
+}
+
+function getNow(): number {
+  return Date.now()
+}
+
+function getServerNow(): number {
+  return 0
+}
+
+interface FocusViewProps {
+  initialData: FocusPageData
+}
+
+export function FocusView({ initialData }: FocusViewProps) {
+  const [activeSession, setActiveSession] = React.useState<ActivePomodoroSession | null>(
+    initialData.activeSession
+  )
+  const [completedSessions, setCompletedSessions] = React.useState(
+    initialData.completedSessionsToday
+  )
+
+  const [selectedType, setSelectedType] = React.useState<PomodoroType>(
+    initialData.activeSession?.type || "focus"
+  )
+  const [selectedTaskId, setSelectedTaskId] = React.useState<string | null>(
+    initialData.activeSession?.task_id || null
+  )
+
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+  const [isActionPending, startTransition] = React.useTransition()
+
+  // Track current timestamp externally to guarantee purity and sleep resilience
+  const currentTime = React.useSyncExternalStore(subscribeTimer, getNow, getServerNow)
+
+  // Derived total focus minutes
+  const totalFocusMinutes = React.useMemo(() => {
+    const totalSec = completedSessions
+      .filter((s) => s.type === "focus")
+      .reduce((acc, s) => acc + (s.duration_seconds || 0), 0)
+    return Math.round(totalSec / 60)
+  }, [completedSessions])
+
+  // Determine current Pomodoro state and remaining seconds strictly from timestamps
+  const { state, remainingSeconds, isDone } = React.useMemo(() => {
+    const effectiveNow =
+      currentTime > 0
+        ? currentTime
+        : activeSession
+        ? new Date(activeSession.started_at).getTime()
+        : 0
+
+    if (!activeSession) {
+      return {
+        state: "IDLE" as PomodoroState,
+        remainingSeconds: DEFAULT_DURATIONS[selectedType],
+        isDone: false,
+      }
+    }
+
+    const remaining = calculateRemainingSeconds(
+      activeSession.started_at,
+      activeSession.duration_seconds,
+      effectiveNow
+    )
+    const completed = isSessionCompleted(
+      activeSession.started_at,
+      activeSession.duration_seconds,
+      effectiveNow
+    )
+
+    if (activeSession.type === "focus") {
+      return {
+        state: (completed ? "FOCUS_COMPLETE" : "FOCUSING") as PomodoroState,
+        remainingSeconds: remaining,
+        isDone: completed,
+      }
+    }
+
+    // Short or long break
+    return {
+      state: (completed ? "BREAK_COMPLETE" : "SHORT_BREAK") as PomodoroState,
+      remainingSeconds: remaining,
+      isDone: completed,
+    }
+  }, [activeSession, currentTime, selectedType])
+
+  // Track if completion was already persisted to avoid duplicate network calls
+  const completionHandledRef = React.useRef<string | null>(null)
+
+  // Handle completion when time runs out
+  React.useEffect(() => {
+    if (!activeSession || !isDone || completionHandledRef.current === activeSession.id) {
+      return
+    }
+
+    completionHandledRef.current = activeSession.id
+    playChime()
+
+    const finishedSession: PomodoroSession & { task_title?: string | null } = {
+      ...activeSession,
+      ended_at: new Date().toISOString(),
+    }
+
+    // Persist completed session asynchronously
+    void completePomodoroSession(activeSession.id).then(() => {
+      setCompletedSessions((prev) => [finishedSession, ...prev])
+    })
+  }, [activeSession, isDone])
+
+  // Start Session
+  const handleStartSession = (typeToStart: PomodoroType = selectedType) => {
+    setErrorMessage(null)
+    const duration = DEFAULT_DURATIONS[typeToStart]
+    setSelectedType(typeToStart)
+
+    startTransition(async () => {
+      try {
+        const res = await startPomodoroSession({
+          type: typeToStart,
+          duration_seconds: duration,
+          task_id: typeToStart === "focus" ? selectedTaskId : null,
+        })
+
+        if (!res.success || !res.data) {
+          setErrorMessage(res.error || "Failed to start session.")
+          return
+        }
+
+        const taskTitle = initialData.availableTasks.find((t) => t.id === selectedTaskId)?.title || null
+        const sessionWithTask: ActivePomodoroSession = {
+          ...res.data,
+          task_title: taskTitle,
+        }
+
+        setActiveSession(sessionWithTask)
+        completionHandledRef.current = null
+      } catch {
+        setErrorMessage("Network error starting session.")
+      }
+    })
+  }
+
+  // Cancel / Reset Session
+  const handleResetSession = () => {
+    setErrorMessage(null)
+    if (!activeSession) return
+
+    const sessionId = activeSession.id
+    setActiveSession(null)
+
+    startTransition(async () => {
+      try {
+        await cancelPomodoroSession(sessionId)
+      } catch {
+        // Ignored on reset
+      }
+    })
+  }
+
+  // Task Association Change
+  const handleTaskSelect = (taskId: string | null) => {
+    setSelectedTaskId(taskId)
+    if (activeSession) {
+      const taskTitle = initialData.availableTasks.find((t) => t.id === taskId)?.title || null
+      setActiveSession((prev) => (prev ? { ...prev, task_id: taskId, task_title: taskTitle } : null))
+      associateTaskWithSession(activeSession.id, taskId)
+    }
+  }
+
+  // Quick Complete Task
+  const handleMarkTaskComplete = async () => {
+    if (!selectedTaskId) return
+    try {
+      await toggleTaskStatus(selectedTaskId, "todo")
+      setSelectedTaskId(null)
+      if (activeSession) {
+        setActiveSession((prev) => (prev ? { ...prev, task_id: null, task_title: null } : null))
+      }
+    } catch {
+      // Ignored
+    }
+  }
+
+  const currentDuration = activeSession
+    ? activeSession.duration_seconds
+    : DEFAULT_DURATIONS[selectedType]
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-6 max-w-2xl mx-auto py-4 pb-16 w-full">
+      {/* Header */}
+      <div className="text-center">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/80 bg-muted/40 font-mono text-xs text-muted-foreground mb-2">
+          {state === "FOCUSING" || state === "SHORT_BREAK" ? (
+            <Radio className="size-3 text-emerald-500 animate-pulse" />
+          ) : (
+            <Timer className="size-3.5 text-amber-500" />
+          )}
+          <span>Timestamp-Backed Pomodoro Engine</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          Focus Mode
+        </h1>
+        <p className="text-xs text-muted-foreground font-mono mt-1">
+          Deep work cycles with drift-free background and sleep resilience
+        </p>
+      </div>
+
+      {/* Error Banner */}
+      {errorMessage && (
+        <div className="flex items-center justify-between gap-2 p-3 text-xs rounded-xl border border-destructive/30 bg-destructive/10 text-destructive font-mono w-full max-w-lg animate-in fade-in-0">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="size-4 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setErrorMessage(null)}
+            className="hover:opacity-75 cursor-pointer"
+            aria-label="Dismiss error"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Mode Selector Tabs (only clickable in IDLE or when complete) */}
+      <div className="flex items-center gap-1 p-1 rounded-xl border border-border/60 bg-muted/30 text-xs font-mono">
+        <button
+          type="button"
+          disabled={state === "FOCUSING" || state === "SHORT_BREAK"}
+          onClick={() => {
+            setSelectedType("focus")
+            setActiveSession(null)
+          }}
+          className={cn(
+            "px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-medium select-none",
+            selectedType === "focus"
+              ? "bg-foreground text-background font-semibold shadow-xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+            (state === "FOCUSING" || state === "SHORT_BREAK") && "opacity-60 cursor-not-allowed"
+          )}
+        >
+          Focus (25m)
+        </button>
+
+        <button
+          type="button"
+          disabled={state === "FOCUSING" || state === "SHORT_BREAK"}
+          onClick={() => {
+            setSelectedType("short_break")
+            setActiveSession(null)
+          }}
+          className={cn(
+            "px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-medium select-none",
+            selectedType === "short_break"
+              ? "bg-foreground text-background font-semibold shadow-xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+            (state === "FOCUSING" || state === "SHORT_BREAK") && "opacity-60 cursor-not-allowed"
+          )}
+        >
+          Short Break (5m)
+        </button>
+
+        <button
+          type="button"
+          disabled={state === "FOCUSING" || state === "SHORT_BREAK"}
+          onClick={() => {
+            setSelectedType("long_break")
+            setActiveSession(null)
+          }}
+          className={cn(
+            "px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-medium select-none",
+            selectedType === "long_break"
+              ? "bg-foreground text-background font-semibold shadow-xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+            (state === "FOCUSING" || state === "SHORT_BREAK") && "opacity-60 cursor-not-allowed"
+          )}
+        >
+          Long Break (15m)
+        </button>
+      </div>
+
+      {/* Main Timer Card */}
+      <div className="w-full max-w-xl rounded-2xl border border-border/70 bg-card p-6 sm:p-8 shadow-xs flex flex-col items-center justify-center gap-4">
+        {/* SVG Circular Countdown Display */}
+        <PomodoroTimerDisplay
+          state={state}
+          remainingSeconds={remainingSeconds}
+          durationSeconds={currentDuration}
+          type={selectedType}
+          taskTitle={activeSession?.task_title}
+        />
+
+        {/* Task Association Selector */}
+        {selectedType === "focus" && (
+          <div className="w-full flex flex-col items-center gap-1.5">
+            <TaskAssociationSelector
+              availableTasks={initialData.availableTasks}
+              selectedTaskId={selectedTaskId}
+              onSelectTask={handleTaskSelect}
+              disabled={state === "FOCUSING"}
+            />
+
+            {/* Quick Complete Task Button if active */}
+            {selectedTaskId && (
+              <button
+                type="button"
+                onClick={handleMarkTaskComplete}
+                className="text-[11px] font-mono text-muted-foreground hover:text-emerald-500 transition-colors flex items-center gap-1 cursor-pointer mt-0.5"
+              >
+                <CheckCircle className="size-3" />
+                <span>Mark task completed</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-3 mt-3">
+          {state === "IDLE" && (
+            <Button
+              size="lg"
+              disabled={isActionPending}
+              onClick={() => handleStartSession(selectedType)}
+              className="gap-2 font-mono text-xs px-8 cursor-pointer shadow-xs"
+            >
+              <Play className="size-4 fill-current" />
+              <span>Start {selectedType === "focus" ? "Focus" : "Break"}</span>
+            </Button>
+          )}
+
+          {(state === "FOCUSING" || state === "SHORT_BREAK") && (
+            <Button
+              variant="outline"
+              size="lg"
+              disabled={isActionPending}
+              onClick={handleResetSession}
+              className="gap-2 font-mono text-xs cursor-pointer text-destructive hover:bg-destructive/10 hover:border-destructive/30"
+            >
+              <RotateCcw className="size-4" />
+              <span>Stop Session</span>
+            </Button>
+          )}
+
+          {state === "FOCUS_COMPLETE" && (
+            <div className="flex items-center gap-2">
+              <Button
+                size="lg"
+                disabled={isActionPending}
+                onClick={() => handleStartSession("short_break")}
+                className="gap-2 font-mono text-xs cursor-pointer shadow-xs"
+              >
+                <Coffee className="size-4" />
+                <span>Start 5m Break</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                disabled={isActionPending}
+                onClick={() => handleStartSession("long_break")}
+                className="gap-2 font-mono text-xs cursor-pointer"
+              >
+                <span>15m Break</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActiveSession(null)}
+                className="font-mono text-xs cursor-pointer"
+              >
+                Done
+              </Button>
+            </div>
+          )}
+
+          {state === "BREAK_COMPLETE" && (
+            <div className="flex items-center gap-2">
+              <Button
+                size="lg"
+                disabled={isActionPending}
+                onClick={() => handleStartSession("focus")}
+                className="gap-2 font-mono text-xs cursor-pointer shadow-xs"
+              >
+                <Play className="size-4 fill-current" />
+                <span>Start Next Focus Block</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveSession(null)}
+                className="font-mono text-xs cursor-pointer"
+              >
+                Done
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Daily Metrics & Session History */}
+      <SessionStats
+        completedSessions={completedSessions}
+        totalFocusMinutes={totalFocusMinutes}
+      />
+    </div>
+  )
+}

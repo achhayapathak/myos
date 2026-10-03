@@ -1,0 +1,136 @@
+"use client"
+
+import * as React from "react"
+import {
+  Coffee,
+  CheckCircle2,
+  Zap,
+} from "lucide-react"
+import type { PomodoroType } from "@/types/database"
+import type { PomodoroState } from "@/lib/focus/timer-utils"
+import { formatTimerDisplay } from "@/lib/focus/timer-utils"
+import { cn } from "@/lib/utils"
+
+interface PomodoroTimerDisplayProps {
+  state: PomodoroState
+  remainingSeconds: number
+  durationSeconds: number
+  type: PomodoroType
+  taskTitle?: string | null
+}
+
+export function PomodoroTimerDisplay({
+  state,
+  remainingSeconds,
+  durationSeconds,
+  type,
+  taskTitle,
+}: PomodoroTimerDisplayProps) {
+  const formattedTime = formatTimerDisplay(remainingSeconds)
+
+  // Calculate SVG circular stroke progress
+  const progressRatio =
+    durationSeconds > 0
+      ? Math.min(1, Math.max(0, 1 - remainingSeconds / durationSeconds))
+      : 0
+
+  const radius = 120
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = circumference * (1 - progressRatio)
+
+  const isBreak = type === "short_break" || type === "long_break"
+  const isComplete = state === "FOCUS_COMPLETE" || state === "BREAK_COMPLETE"
+  const isActive = state === "FOCUSING" || state === "SHORT_BREAK"
+
+  return (
+    <div className="relative flex flex-col items-center justify-center py-6 select-none">
+      {/* SVG Circular Progress Ring */}
+      <div className="relative flex items-center justify-center">
+        <svg
+          className="size-64 sm:size-72 -rotate-90 transform"
+          viewBox="0 0 280 280"
+        >
+          {/* Background circle track */}
+          <circle
+            cx="140"
+            cy="140"
+            r={radius}
+            className="stroke-muted/40 fill-none"
+            strokeWidth="8"
+          />
+
+          {/* Animated active progress stroke */}
+          <circle
+            cx="140"
+            cy="140"
+            r={radius}
+            className={cn(
+              "fill-none transition-all duration-300 ease-out",
+              isComplete
+                ? "stroke-emerald-500"
+                : isBreak
+                ? "stroke-sky-500"
+                : "stroke-primary"
+            )}
+            strokeWidth="10"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+          />
+        </svg>
+
+        {/* Center content inside ring */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+          {/* State / Mode Badge */}
+          <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground uppercase tracking-widest mb-1">
+            {isComplete ? (
+              <CheckCircle2 className="size-3.5 text-emerald-500" />
+            ) : isBreak ? (
+              <Coffee className="size-3.5 text-sky-500" />
+            ) : (
+              <Zap className="size-3.5 text-amber-500" />
+            )}
+            <span>
+              {state === "FOCUS_COMPLETE"
+                ? "Focus Complete"
+                : state === "BREAK_COMPLETE"
+                ? "Break Complete"
+                : type === "focus"
+                ? "Focus Block"
+                : type === "short_break"
+                ? "Short Break"
+                : "Long Break"}
+            </span>
+          </div>
+
+          {/* Large Countdown Display */}
+          <div
+            className={cn(
+              "text-5xl sm:text-6xl font-mono font-bold tracking-tighter tabular-nums transition-colors",
+              isComplete
+                ? "text-emerald-500"
+                : isActive
+                ? "text-foreground"
+                : "text-foreground/90"
+            )}
+          >
+            {formattedTime}
+          </div>
+
+          {/* Helper Subtext */}
+          <p className="text-[11px] font-mono text-muted-foreground mt-2 max-w-[200px] truncate">
+            {state === "IDLE"
+              ? "Ready for deep work"
+              : state === "FOCUSING"
+              ? taskTitle ? `Task: ${taskTitle}` : "Focusing without distraction"
+              : state === "SHORT_BREAK"
+              ? "Rest your eyes & stretch"
+              : state === "FOCUS_COMPLETE"
+              ? "Great job! Time for a break."
+              : "Break finished. Ready?"}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}

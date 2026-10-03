@@ -3,6 +3,7 @@ import "./globals.css";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PWAProvider, OfflineIndicator } from "@/components/pwa";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -20,6 +21,22 @@ export const metadata: Metadata = {
     default: "MyOS — Personal Operating System",
   },
   description: "A private, single-user productivity application for fast daily workflows.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "MyOS",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
@@ -46,7 +63,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TooltipProvider delay={150}>
-            {children}
+            <PWAProvider>
+              {children}
+              <OfflineIndicator />
+            </PWAProvider>
           </TooltipProvider>
         </ThemeProvider>
       </body>

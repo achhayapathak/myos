@@ -240,6 +240,51 @@ export type PushSubscriptionUpdate = {
   updated_at?: string
 }
 
+export type NotificationDeliveryStatus = "pending" | "delivered" | "failed" | "cancelled"
+export type NotificationDeliveryChannel = "web_push" | "in_app"
+
+export type NotificationDelivery = {
+  id: string
+  user_id: string
+  reminder_id: string | null
+  channel: NotificationDeliveryChannel
+  status: NotificationDeliveryStatus
+  scheduled_at: string
+  delivered_at: string | null
+  payload: Json
+  error_message: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type NotificationDeliveryInsert = {
+  id?: string
+  user_id?: string
+  reminder_id?: string | null
+  channel?: NotificationDeliveryChannel
+  status?: NotificationDeliveryStatus
+  scheduled_at: string
+  delivered_at?: string | null
+  payload?: Json
+  error_message?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export type NotificationDeliveryUpdate = {
+  id?: string
+  user_id?: string
+  reminder_id?: string | null
+  channel?: NotificationDeliveryChannel
+  status?: NotificationDeliveryStatus
+  scheduled_at?: string
+  delivered_at?: string | null
+  payload?: Json
+  error_message?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -283,6 +328,12 @@ export type Database = {
         Row: PushSubscription
         Insert: PushSubscriptionInsert
         Update: PushSubscriptionUpdate
+        Relationships: []
+      }
+      notification_deliveries: {
+        Row: NotificationDelivery
+        Insert: NotificationDeliveryInsert
+        Update: NotificationDeliveryUpdate
         Relationships: []
       }
     }

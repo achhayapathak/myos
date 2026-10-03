@@ -43,7 +43,7 @@ export function NotesView({ initialNotes }: NotesViewProps) {
   }, [notes, selectedNoteId])
 
   // Create Note
-  const handleCreateNote = async () => {
+  const handleCreateNote = React.useCallback(async () => {
     setErrorMessage(null)
     try {
       const res = await createNote({
@@ -63,7 +63,31 @@ export function NotesView({ initialNotes }: NotesViewProps) {
     } catch {
       setErrorMessage("Network error while creating note.")
     }
-  }
+  }, [])
+
+  // Command palette and deep link listener for note creation
+  React.useEffect(() => {
+    const handleCreateEvent = () => {
+      void handleCreateNote()
+    }
+
+    window.addEventListener("myos:create-note", handleCreateEvent)
+
+    const timer = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get("new") === "true" || params.get("create") === "true") {
+          void handleCreateNote()
+          window.history.replaceState({}, "", window.location.pathname)
+        }
+      }
+    }, 0)
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener("myos:create-note", handleCreateEvent)
+    }
+  }, [handleCreateNote])
 
   // Update Note (called by debounced autosave in editor)
   const handleUpdateNote = async (updated: {

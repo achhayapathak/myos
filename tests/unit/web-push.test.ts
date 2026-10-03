@@ -28,7 +28,6 @@ import {
 const mockGetUser = vi.fn()
 const mockUpsert = vi.fn()
 const mockDelete = vi.fn()
-const mockSelect = vi.fn()
 const mockUpdate = vi.fn()
 
 const mockSupabase = {

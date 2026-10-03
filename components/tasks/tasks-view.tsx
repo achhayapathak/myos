@@ -101,8 +101,31 @@ export function TasksView({
       }
     }
 
+    const handleCreateEvent = () => {
+      setEditingTask(null)
+      setIsCreateOpen(true)
+    }
+
     window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
+    window.addEventListener("myos:create-task", handleCreateEvent)
+
+    // Handle deep-link or command palette query parameter
+    const timer = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get("new") === "true" || params.get("create") === "true") {
+          setEditingTask(null)
+          setIsCreateOpen(true)
+          window.history.replaceState({}, "", window.location.pathname)
+        }
+      }
+    }, 0)
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("myos:create-task", handleCreateEvent)
+    }
   }, [])
 
   // Optimistic Toggle Complete / Reopen

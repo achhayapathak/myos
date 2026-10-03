@@ -192,37 +192,68 @@ export function FocusView({ initialData }: FocusViewProps) {
   }, [activeSession, isDone])
 
   // Start Session
-  const handleStartSession = (typeToStart: PomodoroType = selectedType) => {
-    setErrorMessage(null)
-    const duration = DEFAULT_DURATIONS[typeToStart]
-    setSelectedType(typeToStart)
+  const handleStartSession = React.useCallback(
+    (typeToStart: PomodoroType = selectedType) => {
+      setErrorMessage(null)
+      const duration = DEFAULT_DURATIONS[typeToStart]
+      setSelectedType(typeToStart)
 
-    startTransition(async () => {
-      try {
-        const res = await startPomodoroSession({
-          type: typeToStart,
-          duration_seconds: duration,
-          task_id: typeToStart === "focus" ? selectedTaskId : null,
-        })
+      startTransition(async () => {
+        try {
+          const res = await startPomodoroSession({
+            type: typeToStart,
+            duration_seconds: duration,
+            task_id: typeToStart === "focus" ? selectedTaskId : null,
+          })
 
-        if (!res.success || !res.data) {
-          setErrorMessage(res.error || "Failed to start session.")
-          return
+          if (!res.success || !res.data) {
+            setErrorMessage(res.error || "Failed to start session.")
+            return
+          }
+
+          const taskTitle = initialData.availableTasks.find((t) => t.id === selectedTaskId)?.title || null
+          const sessionWithTask: ActivePomodoroSession = {
+            ...res.data,
+            task_title: taskTitle,
+          }
+
+          setActiveSession(sessionWithTask)
+          completionHandledRef.current = null
+        } catch {
+          setErrorMessage("Network error starting session.")
         }
+      })
+    },
+    [initialData.availableTasks, selectedTaskId, selectedType]
+  )
 
-        const taskTitle = initialData.availableTasks.find((t) => t.id === selectedTaskId)?.title || null
-        const sessionWithTask: ActivePomodoroSession = {
-          ...res.data,
-          task_title: taskTitle,
-        }
-
-        setActiveSession(sessionWithTask)
-        completionHandledRef.current = null
-      } catch {
-        setErrorMessage("Network error starting session.")
+  // Command palette and deep link listener for starting focus
+  React.useEffect(() => {
+    const handleStartEvent = () => {
+      if (!activeSession) {
+        handleStartSession("focus")
       }
-    })
-  }
+    }
+
+    window.addEventListener("myos:start-focus", handleStartEvent)
+
+    const timer = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get("start") === "true") {
+          if (!activeSession) {
+            handleStartSession("focus")
+          }
+          window.history.replaceState({}, "", window.location.pathname)
+        }
+      }
+    }, 0)
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener("myos:start-focus", handleStartEvent)
+    }
+  }, [activeSession, handleStartSession])
 
   // Cancel / Reset Session
   const handleResetSession = () => {

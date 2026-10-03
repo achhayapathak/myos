@@ -15,9 +15,11 @@ import {
   MoreHorizontal,
   X,
   LogOut,
+  Search,
 } from "lucide-react"
 import { logout } from "@/app/(auth)/actions"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useCommandPalette } from "@/components/command-palette"
 import {
   Dialog,
   DialogContent,
@@ -41,6 +43,7 @@ const SECONDARY_MOBILE_ITEMS = [
 
 export function MobileBottomNav() {
   const pathname = usePathname()
+  const { setOpen: setCommandPaletteOpen } = useCommandPalette()
   const [moreOpen, setMoreOpen] = React.useState(false)
 
   const isSecondaryActive = SECONDARY_MOBILE_ITEMS.some((item) => pathname?.startsWith(item.href))
@@ -126,6 +129,28 @@ export function MobileBottomNav() {
           </DialogHeader>
 
           <div className="flex flex-col gap-1 py-2">
+            {/* Command Palette Shortcut Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setMoreOpen(false)
+                setCommandPaletteOpen(true)
+              }}
+              className="flex items-center justify-between w-full p-2.5 rounded-lg text-xs transition-colors bg-muted/40 hover:bg-muted/70 text-foreground text-left cursor-pointer border border-border/40 mb-1"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-1.5 rounded-md bg-foreground text-background">
+                  <Search className="size-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold text-foreground">Command Palette</span>
+                  <span className="text-[11px] text-muted-foreground">Search & quick actions</span>
+                </div>
+              </div>
+              <kbd className="h-5 items-center rounded border border-border bg-background px-1.5 font-mono text-[10px] text-muted-foreground flex">
+                ⌘K
+              </kbd>
+            </button>
             {SECONDARY_MOBILE_ITEMS.map((item) => {
               const Icon = item.icon
               const isActive = pathname?.startsWith(item.href)

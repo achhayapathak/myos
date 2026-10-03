@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import type { TaskPriority, TaskStatus } from "@/types/database"
 import { getTodayDateBounds } from "@/lib/today-utils"
+import { localToUtc } from "@/lib/calendar/timezone-utils"
 
 export interface ActionResponse {
   success?: boolean
@@ -19,6 +20,7 @@ export async function createQuickTask(formData: FormData): Promise<ActionRespons
   const title = (formData.get("title") as string)?.trim()
   const priorityRaw = (formData.get("priority") as string)?.trim() || "medium"
   const dueToday = formData.get("dueToday") === "true" || formData.get("dueToday") === "on"
+  const dueDate = (formData.get("dueDate") as string)?.trim()
 
   if (!title) {
     return { error: "Task title cannot be empty." }
@@ -45,7 +47,16 @@ export async function createQuickTask(formData: FormData): Promise<ActionRespons
 
   // Determine due_at timestamp
   let dueAt: string | null = null
-  if (dueToday) {
+  if (dueDate) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("timezone")
+      .eq("user_id", user.id)
+      .maybeSingle()
+
+    const timeZone = profile?.timezone || "Asia/Kolkata"
+    dueAt = localToUtc(dueDate, "23:59:59", timeZone)
+  } else if (dueToday) {
     // Look up user profile timezone
     const { data: profile } = await supabase
       .from("profiles")

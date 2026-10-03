@@ -301,6 +301,24 @@ describe("Today Dashboard Unit Tests", () => {
       )
     })
 
+    it("creates quick task with custom dueDate selected from calendar", async () => {
+      const { createQuickTask } = await import("@/app/(app)/today/actions")
+      const formData = new FormData()
+      formData.append("title", "Review quarterly goals")
+      formData.append("priority", "medium")
+      formData.append("dueDate", "2026-10-15")
+
+      const result = await createQuickTask(formData)
+      expect(result.success).toBe(true)
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: "test-user-id",
+          title: "Review quarterly goals",
+          due_at: expect.stringContaining("2026-10-15"),
+        })
+      )
+    })
+
     it("rejects quick note creation with empty content", async () => {
       const { createQuickNote } = await import("@/app/(app)/today/actions")
       const formData = new FormData()

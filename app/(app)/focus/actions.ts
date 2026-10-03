@@ -39,6 +39,20 @@ export async function startPomodoroSession(
   const { type, duration_seconds, task_id } = parseResult.data
   const supabase = await createClient()
 
+  // Validate task ownership if associated
+  if (task_id) {
+    const { data: task } = await supabase
+      .from("tasks")
+      .select("id")
+      .eq("id", task_id)
+      .eq("user_id", user.id)
+      .maybeSingle()
+
+    if (!task) {
+      return { success: false, error: "Task not found or unauthorized." }
+    }
+  }
+
   const nowIso = new Date().toISOString()
 
   // 1. Close any existing active sessions for this user first
@@ -189,6 +203,21 @@ export async function associateTaskWithSession(
   }
 
   const supabase = await createClient()
+
+  // Validate task ownership if associating a task
+  if (taskId) {
+    const { data: task } = await supabase
+      .from("tasks")
+      .select("id")
+      .eq("id", taskId)
+      .eq("user_id", user.id)
+      .maybeSingle()
+
+    if (!task) {
+      return { success: false, error: "Task not found or unauthorized." }
+    }
+  }
+
   const { error } = await supabase
     .from("pomodoro_sessions")
     .update({

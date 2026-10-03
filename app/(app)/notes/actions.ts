@@ -159,7 +159,10 @@ export async function searchNotes(
     .order("updated_at", { ascending: false })
 
   if (query) {
-    request = request.or(`title.ilike.%${query}%,content.ilike.%${query}%`)
+    const cleanTerm = query.replace(/[,()%]/g, " ").replace(/\s+/g, " ").trim()
+    if (cleanTerm) {
+      request = request.or(`title.ilike.%${cleanTerm}%,content.ilike.%${cleanTerm}%`)
+    }
   }
 
   const { data, error } = await request

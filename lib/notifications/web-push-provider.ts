@@ -6,6 +6,7 @@ import type {
   NotificationSendResult,
   NotificationProvider,
 } from "./types"
+import { isValidPushEndpoint } from "./validation"
 
 /**
  * Server-only Web Push Provider using VAPID authentication.
@@ -39,6 +40,14 @@ class WebPushProvider implements NotificationProvider {
     subscription: PushSubscriptionPayload,
     payload: NotificationPayload
   ): Promise<NotificationSendResult> {
+    if (!isValidPushEndpoint(subscription.endpoint)) {
+      return {
+        endpoint: subscription.endpoint,
+        status: "failed",
+        error: "Untrusted or invalid push endpoint blocked.",
+      }
+    }
+
     if (!this.configureVapid()) {
       return {
         endpoint: subscription.endpoint,

@@ -80,8 +80,18 @@ describe("Focus / Pomodoro Server Actions & Security Tests", () => {
       }),
     })
 
+    const maybySingleResolved = vi.fn().mockResolvedValue({ data: { id: "123e4567-e89b-12d3-a456-426614174000" }, error: null })
+    const deepEqChain: Record<string, unknown> = {
+      maybeSingle: maybySingleResolved,
+      single: mockSingle.mockResolvedValue({ data: mockSession, error: null }),
+      is: vi.fn().mockResolvedValue({ error: null }),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+    }
+    deepEqChain.eq = vi.fn().mockReturnValue(deepEqChain)
+
     mockSelect.mockReturnValue({
       eq: vi.fn().mockReturnValue({
+        ...deepEqChain,
         is: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
             maybeSingle: vi.fn().mockResolvedValue({ data: mockSession, error: null }),

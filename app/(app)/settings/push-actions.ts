@@ -6,9 +6,15 @@ import { createClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/supabase/auth"
 import type { PomodoroType } from "@/types/database"
 import { notificationService } from "@/lib/notifications/service"
+import { isValidPushEndpoint } from "@/lib/notifications/validation"
 
 const pushSubscriptionSchema = z.object({
-  endpoint: z.string().url("Valid subscription endpoint URL required."),
+  endpoint: z
+    .string()
+    .url("Valid subscription endpoint URL required.")
+    .refine(isValidPushEndpoint, {
+      message: "Push endpoint must be a valid public HTTPS URL.",
+    }),
   keys: z.object({
     p256dh: z.string().min(10, "Valid p256dh key required."),
     auth: z.string().min(6, "Valid auth key required."),

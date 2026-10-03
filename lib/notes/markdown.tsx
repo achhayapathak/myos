@@ -18,9 +18,9 @@ export function sanitizeUrl(rawUrl: string): string {
     return "#"
   }
 
-  // Allow relative URLs, http, https, and mailto
+  // Allow safe relative URLs, http, https, and mailto (block protocol-relative // and /\)
   if (
-    trimmed.startsWith("/") ||
+    (trimmed.startsWith("/") && !trimmed.startsWith("//") && !trimmed.startsWith("/\\")) ||
     trimmed.startsWith("#") ||
     trimmed.startsWith("http://") ||
     trimmed.startsWith("https://") ||

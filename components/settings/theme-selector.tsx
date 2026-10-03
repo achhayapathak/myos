@@ -35,7 +35,7 @@ export function ThemeSelector() {
             type="button"
             onClick={() => setTheme(opt.value)}
             className={cn(
-              "flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-xs font-mono transition-all",
+              "flex items-center justify-center gap-2 min-h-[40px] py-2 px-3 rounded-lg border text-xs font-mono transition-all touch-manipulation cursor-pointer active:scale-95",
               isSelected
                 ? "border-foreground bg-foreground text-background font-semibold shadow-xs"
                 : "border-border/60 bg-card hover:bg-muted text-muted-foreground hover:text-foreground"

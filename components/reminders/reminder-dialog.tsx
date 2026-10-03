@@ -182,7 +182,7 @@ function ReminderDialogInner({
   }
 
   return (
-    <DialogContent className="sm:max-w-md">
+    <DialogContent className="sm:max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold flex items-center gap-2">
@@ -217,7 +217,7 @@ function ReminderDialogInner({
             onChange={(e) => setTitle(e.target.value)}
             disabled={loading || deleting}
             autoFocus
-            className="text-sm font-medium"
+            className="text-base sm:text-sm font-medium"
           />
         </div>
 
@@ -234,7 +234,7 @@ function ReminderDialogInner({
               size="xs"
               onClick={() => applyPreset(computePresetDate(1))}
               disabled={loading || deleting}
-              className="text-[11px] font-mono"
+              className="min-h-[30px] touch-manipulation text-[11px] font-mono"
             >
               +1 Hour
             </Button>
@@ -244,7 +244,7 @@ function ReminderDialogInner({
               size="xs"
               onClick={() => applyPreset(computePresetDate(3))}
               disabled={loading || deleting}
-              className="text-[11px] font-mono"
+              className="min-h-[30px] touch-manipulation text-[11px] font-mono"
             >
               +3 Hours
             </Button>
@@ -254,7 +254,7 @@ function ReminderDialogInner({
               size="xs"
               onClick={() => applyPreset(computePresetDate(1, 9, 0))}
               disabled={loading || deleting}
-              className="text-[11px] font-mono"
+              className="min-h-[30px] touch-manipulation text-[11px] font-mono"
             >
               Tomorrow 9 AM
             </Button>
@@ -264,7 +264,7 @@ function ReminderDialogInner({
               size="xs"
               onClick={() => applyPreset(computePresetDate(1, 18, 0))}
               disabled={loading || deleting}
-              className="text-[11px] font-mono"
+              className="min-h-[30px] touch-manipulation text-[11px] font-mono"
             >
               Tomorrow 6 PM
             </Button>
@@ -283,7 +283,7 @@ function ReminderDialogInner({
               value={scheduledDate}
               onChange={(e) => setScheduledDate(e.target.value)}
               disabled={loading || deleting}
-              className="font-mono text-xs"
+              className="font-mono text-base sm:text-xs"
             />
           </div>
 
@@ -297,7 +297,7 @@ function ReminderDialogInner({
               value={scheduledTime}
               onChange={(e) => setScheduledTime(e.target.value)}
               disabled={loading || deleting}
-              className="font-mono text-xs"
+              className="font-mono text-base sm:text-xs"
             />
           </div>
         </div>
@@ -319,7 +319,7 @@ function ReminderDialogInner({
               size="sm"
               onClick={handleDelete}
               disabled={loading || deleting}
-              className="gap-1.5 text-xs font-mono"
+              className="gap-1.5 text-xs font-mono touch-manipulation"
             >
               {deleting ? (
                 <Loader2 className="size-3.5 animate-spin" />
@@ -339,7 +339,7 @@ function ReminderDialogInner({
               size="sm"
               onClick={() => onOpenChange(false)}
               disabled={loading || deleting}
-              className="text-xs font-mono"
+              className="text-xs font-mono touch-manipulation"
             >
               Cancel
             </Button>
@@ -347,7 +347,7 @@ function ReminderDialogInner({
               type="submit"
               size="sm"
               disabled={loading || deleting || !title.trim()}
-              className="gap-1.5 text-xs font-mono"
+              className="gap-1.5 text-xs font-mono touch-manipulation"
             >
               {loading && <Loader2 className="size-3.5 animate-spin" />}
               <span>{isEditing ? "Save Changes" : "Set Reminder"}</span>

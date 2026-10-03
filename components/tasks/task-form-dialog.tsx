@@ -162,7 +162,7 @@ function TaskFormContent({ taskToEdit, onOpenChange, onSuccess }: InnerFormProps
 
   return (
     <DialogContent
-      className="sm:max-w-lg w-full max-h-[90vh] overflow-y-auto"
+      className="sm:max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto"
       onKeyDown={handleKeyDown}
     >
       <DialogHeader>
@@ -207,7 +207,7 @@ function TaskFormContent({ taskToEdit, onOpenChange, onSuccess }: InnerFormProps
             autoFocus
             disabled={isSubmitting}
             maxLength={255}
-            className="text-sm font-medium"
+            className="text-base sm:text-sm font-medium"
           />
         </div>
 
@@ -230,7 +230,7 @@ function TaskFormContent({ taskToEdit, onOpenChange, onSuccess }: InnerFormProps
             disabled={isSubmitting}
             maxLength={2000}
             rows={3}
-            className="text-xs font-normal"
+            className="text-base sm:text-xs font-normal"
           />
         </div>
 
@@ -247,7 +247,7 @@ function TaskFormContent({ taskToEdit, onOpenChange, onSuccess }: InnerFormProps
                   onClick={() => setPriority(p.value)}
                   disabled={isSubmitting}
                   className={cn(
-                    "flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg border text-xs font-medium transition-all cursor-pointer select-none",
+                    "flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border text-xs font-medium transition-all cursor-pointer select-none touch-manipulation min-h-[36px]",
                     isSelected
                       ? "bg-primary text-primary-foreground border-primary shadow-xs font-semibold"
                       : "bg-muted/40 border-border/70 text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -273,7 +273,7 @@ function TaskFormContent({ taskToEdit, onOpenChange, onSuccess }: InnerFormProps
                   onClick={() => setStatus(s.value)}
                   disabled={isSubmitting}
                   className={cn(
-                    "py-1.5 px-2 rounded-lg border text-xs transition-all cursor-pointer select-none text-center truncate",
+                    "py-2 px-2 rounded-lg border text-xs transition-all cursor-pointer select-none text-center truncate touch-manipulation min-h-[36px]",
                     isSelected
                       ? "bg-foreground text-background border-foreground font-semibold"
                       : "bg-muted/30 border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -300,7 +300,7 @@ function TaskFormContent({ taskToEdit, onOpenChange, onSuccess }: InnerFormProps
                   setDueDateStr("")
                   setDueTimeStr("")
                 }}
-                className="text-[11px] font-mono text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                className="text-[11px] font-mono text-muted-foreground hover:text-destructive transition-colors cursor-pointer touch-manipulation"
               >
                 Clear date
               </button>
@@ -313,7 +313,7 @@ function TaskFormContent({ taskToEdit, onOpenChange, onSuccess }: InnerFormProps
               value={dueDateStr}
               onChange={(e) => setDueDateStr(e.target.value)}
               disabled={isSubmitting}
-              className="text-xs"
+              className="text-base sm:text-xs"
             />
             <div className="flex items-center gap-1.5">
               <Clock className="size-3.5 text-muted-foreground shrink-0" />
@@ -323,7 +323,7 @@ function TaskFormContent({ taskToEdit, onOpenChange, onSuccess }: InnerFormProps
                 onChange={(e) => setDueTimeStr(e.target.value)}
                 disabled={isSubmitting || !dueDateStr}
                 placeholder="Optional time"
-                className="text-xs"
+                className="text-base sm:text-xs"
               />
             </div>
           </div>
@@ -334,21 +334,21 @@ function TaskFormContent({ taskToEdit, onOpenChange, onSuccess }: InnerFormProps
             <button
               type="button"
               onClick={() => setQuickDate(0)}
-              className="px-2 py-0.5 rounded border border-border/60 bg-muted/30 hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+              className="px-2.5 py-1 min-h-[30px] rounded border border-border/60 bg-muted/30 hover:bg-muted hover:text-foreground transition-colors cursor-pointer touch-manipulation"
             >
               Today
             </button>
             <button
               type="button"
               onClick={() => setQuickDate(1)}
-              className="px-2 py-0.5 rounded border border-border/60 bg-muted/30 hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+              className="px-2.5 py-1 min-h-[30px] rounded border border-border/60 bg-muted/30 hover:bg-muted hover:text-foreground transition-colors cursor-pointer touch-manipulation"
             >
               Tomorrow
             </button>
             <button
               type="button"
               onClick={() => setQuickDate(7)}
-              className="px-2 py-0.5 rounded border border-border/60 bg-muted/30 hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+              className="px-2.5 py-1 min-h-[30px] rounded border border-border/60 bg-muted/30 hover:bg-muted hover:text-foreground transition-colors cursor-pointer touch-manipulation"
             >
               Next Week
             </button>

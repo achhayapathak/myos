@@ -50,7 +50,7 @@ export function TodayHeader({
             href="/focus"
             className={cn(
               buttonVariants({ variant: "outline", size: "sm" }),
-              "gap-1.5 text-xs font-mono"
+              "gap-1.5 text-xs font-mono min-h-[36px] sm:min-h-0 px-3 touch-manipulation"
             )}
           >
             <Play className="size-3.5 fill-current" />
@@ -60,7 +60,7 @@ export function TodayHeader({
             href="#quick-task"
             className={cn(
               buttonVariants({ variant: "default", size: "sm" }),
-              "gap-1.5 text-xs font-mono"
+              "gap-1.5 text-xs font-mono min-h-[36px] sm:min-h-0 px-3 touch-manipulation"
             )}
           >
             <Plus className="size-3.5" />

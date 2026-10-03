@@ -24,7 +24,7 @@ export function OfflineIndicator() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 rounded-full bg-destructive text-destructive-foreground shadow-lg border border-destructive-foreground/20 text-xs font-medium animate-in fade-in slide-in-from-bottom-3 duration-200 max-w-[calc(100%-2rem)]"
+      className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 rounded-full bg-destructive text-destructive-foreground shadow-lg border border-destructive-foreground/20 text-xs font-medium animate-in fade-in slide-in-from-bottom-3 duration-200 max-w-[calc(100%-2rem)]"
     >
       <div className="flex items-center gap-2 truncate">
         <WifiOff className="size-3.5 shrink-0 animate-pulse" />

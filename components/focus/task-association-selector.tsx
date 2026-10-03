@@ -39,7 +39,7 @@ export function TaskAssociationSelector({
             <button
               type="button"
               className={cn(
-                "flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl border border-border/60 bg-muted/30 text-xs font-mono transition-all text-left max-w-full truncate cursor-pointer",
+                "flex items-center justify-between gap-2 px-3 py-2 min-h-[38px] rounded-xl border border-border/60 bg-muted/30 text-xs font-mono transition-all text-left max-w-full truncate cursor-pointer touch-manipulation",
                 disabled && "opacity-60 cursor-not-allowed",
                 selectedTask ? "border-primary/40 bg-primary/5 text-foreground" : "text-muted-foreground hover:bg-muted"
               )}
@@ -66,7 +66,7 @@ export function TaskAssociationSelector({
           </div>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="center" className="w-80 max-h-64 overflow-y-auto">
+        <DropdownMenuContent align="center" className="w-[calc(100vw-2rem)] sm:w-80 max-h-64 overflow-y-auto">
           <DropdownMenuLabel className="text-xs font-mono">
             Select Active Task
           </DropdownMenuLabel>

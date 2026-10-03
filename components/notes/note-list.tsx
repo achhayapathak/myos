@@ -66,16 +66,16 @@ export function NoteList({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search notes..."
-            className="h-7 pl-8 pr-7 text-xs bg-background"
+            className="h-8 sm:h-7 pl-8 pr-7 text-base sm:text-xs bg-background"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => onSearchChange("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 size-4 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+              className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer touch-manipulation"
               aria-label="Clear search"
             >
-              <X className="size-3" />
+              <X className="size-3.5" />
             </button>
           )}
         </div>
@@ -102,7 +102,7 @@ export function NoteList({
                   }
                 }}
                 className={cn(
-                  "group relative flex flex-col p-2.5 rounded-lg text-left transition-all cursor-pointer border select-none",
+                  "group relative flex flex-col p-2.5 rounded-lg text-left transition-all cursor-pointer border select-none touch-manipulation min-h-[52px]",
                   isSelected
                     ? "bg-accent text-accent-foreground border-accent-foreground/20 shadow-xs"
                     : "border-transparent hover:bg-muted/60 text-muted-foreground hover:text-foreground"
@@ -131,7 +131,7 @@ export function NoteList({
                   <button
                     type="button"
                     onClick={(e) => onDeleteNote(note.id, e)}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-all shrink-0 cursor-pointer"
+                    className="opacity-70 md:opacity-0 md:group-hover:opacity-100 p-1.5 -m-0.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-all shrink-0 cursor-pointer touch-manipulation"
                     aria-label={`Delete note "${note.title}"`}
                   >
                     <Trash2 className="size-3.5" />

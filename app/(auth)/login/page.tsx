@@ -88,7 +88,7 @@ function LoginForm() {
             autoComplete="email"
             autoFocus
             disabled={loading}
-            className="font-mono text-xs"
+            className="font-mono text-base sm:text-xs"
           />
         </div>
 
@@ -117,14 +117,14 @@ function LoginForm() {
             required
             autoComplete="current-password"
             disabled={loading}
-            className="font-mono text-xs"
+            className="font-mono text-base sm:text-xs"
           />
         </div>
 
         <Button
           type="submit"
           disabled={loading}
-          className="w-full gap-2 font-mono text-xs mt-2"
+          className="w-full min-h-[40px] gap-2 font-mono text-xs mt-2 touch-manipulation"
         >
           {loading ? (
             <>

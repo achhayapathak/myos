@@ -162,19 +162,19 @@ function NoteEditorInner({
       className="flex-1 flex flex-col h-full bg-background overflow-hidden"
     >
       {/* Top Action Bar */}
-      <div className="p-3 border-b border-border/50 flex items-center justify-between gap-3 shrink-0 bg-muted/10">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+      <div className="p-2 sm:p-3 border-b border-border/50 flex items-center justify-between gap-2 sm:gap-3 shrink-0 bg-muted/10">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
           {/* Mobile Back Button */}
           {showBackButton && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onBackToList}
-              className="md:hidden h-7 px-2 font-mono text-xs gap-1 cursor-pointer shrink-0"
+              className="md:hidden h-8 px-2 font-mono text-xs gap-1 cursor-pointer shrink-0 touch-manipulation min-h-[36px]"
               aria-label="Back to notes list"
             >
               <ArrowLeft className="size-3.5" />
-              <span>Notes</span>
+              <span className="hidden xs:inline">Notes</span>
             </Button>
           )}
 
@@ -189,9 +189,9 @@ function NoteEditorInner({
         </div>
 
         {/* Right Toolbar: Autosave status, View Mode toggle, Delete */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Autosave Status Indicator */}
-          <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
+          <div className="flex items-center gap-1 text-xs font-mono text-muted-foreground">
             {saveState === "saving" && (
               <span className="flex items-center gap-1 text-primary">
                 <Loader2 className="size-3 animate-spin" />
@@ -224,7 +224,7 @@ function NoteEditorInner({
               type="button"
               onClick={() => setViewMode("edit")}
               className={cn(
-                "flex items-center gap-1 px-2 py-1 rounded-md text-xs font-mono transition-all cursor-pointer select-none",
+                "flex items-center gap-1 px-2.5 py-1 min-h-[30px] rounded-md text-xs font-mono transition-all cursor-pointer select-none touch-manipulation",
                 viewMode === "edit"
                   ? "bg-background text-foreground font-semibold shadow-2xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -238,7 +238,7 @@ function NoteEditorInner({
               type="button"
               onClick={() => setViewMode("preview")}
               className={cn(
-                "flex items-center gap-1 px-2 py-1 rounded-md text-xs font-mono transition-all cursor-pointer select-none",
+                "flex items-center gap-1 px-2.5 py-1 min-h-[30px] rounded-md text-xs font-mono transition-all cursor-pointer select-none touch-manipulation",
                 viewMode === "preview"
                   ? "bg-background text-foreground font-semibold shadow-2xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -252,9 +252,9 @@ function NoteEditorInner({
           {/* Delete Note Button */}
           <Button
             variant="ghost"
-            size="icon-xs"
+            size="icon-sm"
             onClick={() => onDelete(note.id)}
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+            className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer touch-manipulation"
             title="Delete this note"
             aria-label="Delete note"
           >
@@ -264,13 +264,13 @@ function NoteEditorInner({
       </div>
 
       {/* Main Body: Markdown Textarea or Safe Preview */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
         {viewMode === "edit" ? (
           <textarea
             value={content}
             onChange={handleContentChange}
             placeholder="Start writing markdown... Use # for headings, - for lists, `code`, **bold**, or links."
-            className="w-full h-full min-h-[350px] resize-none bg-transparent border-none outline-hidden font-mono text-xs leading-relaxed text-foreground placeholder:text-muted-foreground/40 selection:bg-primary/20"
+            className="w-full h-full min-h-[350px] resize-none bg-transparent border-none outline-hidden font-mono text-base sm:text-xs leading-relaxed text-foreground placeholder:text-muted-foreground/40 selection:bg-primary/20"
             autoFocus
           />
         ) : (

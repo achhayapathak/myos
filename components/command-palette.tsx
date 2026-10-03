@@ -305,7 +305,7 @@ export function CommandPalette({
                   key={task.id}
                   value={`task-${task.id}-${task.title}`}
                   onSelect={() => handleSelectTask(task)}
-                  className="flex items-center justify-between gap-3 py-2 px-2.5 cursor-pointer"
+                  className="flex items-center justify-between gap-3 py-2.5 px-3 min-h-[44px] cursor-pointer touch-manipulation"
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <CheckSquare className="size-4 shrink-0 text-blue-500" />
@@ -364,7 +364,7 @@ export function CommandPalette({
                   key={note.id}
                   value={`note-${note.id}-${note.title}`}
                   onSelect={() => handleSelectNote(note)}
-                  className="flex items-center justify-between gap-3 py-2 px-2.5 cursor-pointer"
+                  className="flex items-center justify-between gap-3 py-2.5 px-3 min-h-[44px] cursor-pointer touch-manipulation"
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <FileText className="size-4 shrink-0 text-emerald-500" />
@@ -398,7 +398,7 @@ export function CommandPalette({
                   key={event.id}
                   value={`event-${event.id}-${event.title}`}
                   onSelect={() => handleSelectEvent(event)}
-                  className="flex items-center justify-between gap-3 py-2 px-2.5 cursor-pointer"
+                  className="flex items-center justify-between gap-3 py-2.5 px-3 min-h-[44px] cursor-pointer touch-manipulation"
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <CalendarIcon className="size-4 shrink-0 text-purple-500" />

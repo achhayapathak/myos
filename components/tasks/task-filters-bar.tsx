@@ -97,7 +97,7 @@ export function TaskFiltersBar({
   return (
     <div className="flex flex-col gap-3">
       {/* 1. Status Filter Tabs with counts */}
-      <div className="flex items-center gap-1.5 border-b border-border/50 pb-2 overflow-x-auto no-scrollbar text-xs font-mono">
+      <div className="flex items-center gap-1.5 border-b border-border/50 pb-2 overflow-x-auto no-scrollbar text-xs font-mono touch-pan-x -mx-1 px-1">
         {STATUS_TABS.map((tab) => {
           const isSelected = statusFilter === tab.id
           const count = counts[tab.countKey]
@@ -108,7 +108,7 @@ export function TaskFiltersBar({
               type="button"
               onClick={() => onStatusFilterChange(tab.id)}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all shrink-0 cursor-pointer select-none",
+                "flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg font-medium transition-all shrink-0 cursor-pointer select-none touch-manipulation min-h-[36px] sm:min-h-0",
                 isSelected
                   ? "bg-foreground text-background font-semibold shadow-xs"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -141,7 +141,7 @@ export function TaskFiltersBar({
             value={searchQuery}
             onChange={(e) => onSearchQueryChange(e.target.value)}
             placeholder="Search tasks... (Press / to focus)"
-            className="pl-8 pr-14 text-xs h-8 bg-card"
+            className="pl-8 pr-14 text-base sm:text-xs h-9 sm:h-8 bg-card"
           />
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
             {searchQuery ? (

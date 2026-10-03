@@ -45,9 +45,9 @@ export function PomodoroTimerDisplay({
   return (
     <div className="relative flex flex-col items-center justify-center py-6 select-none">
       {/* SVG Circular Progress Ring */}
-      <div className="relative flex items-center justify-center">
+      <div className="relative flex items-center justify-center max-w-full">
         <svg
-          className="size-64 sm:size-72 -rotate-90 transform"
+          className="size-52 xs:size-60 sm:size-72 -rotate-90 transform max-w-full"
           viewBox="0 0 280 280"
         >
           {/* Background circle track */}
@@ -80,9 +80,9 @@ export function PomodoroTimerDisplay({
         </svg>
 
         {/* Center content inside ring */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 sm:p-6">
           {/* State / Mode Badge */}
-          <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground uppercase tracking-widest mb-1">
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-mono text-muted-foreground uppercase tracking-widest mb-1">
             {isComplete ? (
               <CheckCircle2 className="size-3.5 text-emerald-500" />
             ) : isBreak ? (
@@ -106,7 +106,7 @@ export function PomodoroTimerDisplay({
           {/* Large Countdown Display */}
           <div
             className={cn(
-              "text-5xl sm:text-6xl font-mono font-bold tracking-tighter tabular-nums transition-colors",
+              "text-4xl xs:text-5xl sm:text-6xl font-mono font-bold tracking-tighter tabular-nums transition-colors",
               isComplete
                 ? "text-emerald-500"
                 : isActive

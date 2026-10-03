@@ -19,13 +19,13 @@ export function Topbar() {
   const title = currentItem ? currentItem.title : "Dashboard"
 
   return (
-    <header className="sticky top-0 z-20 flex h-13 items-center justify-between border-b border-border/70 bg-background/80 px-4 md:px-6 backdrop-blur-md transition-colors select-none">
+    <header className="sticky top-0 z-20 flex h-[calc(3.25rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] items-center justify-between border-b border-border/70 bg-background/80 px-3 sm:px-4 md:px-6 backdrop-blur-md transition-colors select-none">
       {/* Left: Mobile Brand & Desktop Breadcrumbs */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Mobile brand badge */}
         <Link
           href="/today"
-          className="md:hidden flex items-center gap-2 px-1.5 py-1 rounded-md hover:bg-muted/50 transition-colors"
+          className="md:hidden flex items-center gap-1.5 px-1.5 py-1 rounded-md hover:bg-muted/50 transition-colors shrink-0"
         >
           <div className="size-5 rounded bg-foreground text-background flex items-center justify-center font-mono font-bold text-[10px]">
             <Terminal className="size-3" />
@@ -34,26 +34,27 @@ export function Topbar() {
         </Link>
 
         {/* Separator on mobile */}
-        <span className="md:hidden text-muted-foreground/40 font-mono text-xs">/</span>
+        <span className="md:hidden text-muted-foreground/40 font-mono text-xs shrink-0">/</span>
 
         {/* Current Section Title / Breadcrumb */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <span className="hidden md:inline font-mono text-xs text-muted-foreground">myos</span>
           <span className="hidden md:inline text-muted-foreground/40 font-mono text-xs">/</span>
-          <h1 className="font-semibold text-xs md:text-sm tracking-tight text-foreground flex items-center gap-1.5">
-            {currentItem && React.createElement(currentItem.icon, { className: "size-3.5 text-muted-foreground hidden sm:inline" })}
-            <span>{title}</span>
+          <h1 className="font-semibold text-xs md:text-sm tracking-tight text-foreground flex items-center gap-1.5 truncate">
+            {currentItem && React.createElement(currentItem.icon, { className: "size-3.5 text-muted-foreground hidden sm:inline shrink-0" })}
+            <span className="truncate">{title}</span>
           </h1>
         </div>
       </div>
 
       {/* Right: Actions, Command Palette, Status, Theme */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Command palette search button */}
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2 h-7 px-2.5 rounded-md border border-border/60 bg-muted/40 hover:bg-muted/80 text-muted-foreground hover:text-foreground text-xs font-mono transition-colors shadow-2xs group focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+          aria-label="Open command palette (Cmd+K)"
+          className="flex items-center gap-2 h-8 px-2 sm:px-2.5 rounded-md border border-border/60 bg-muted/40 hover:bg-muted/80 text-muted-foreground hover:text-foreground text-xs font-mono transition-colors shadow-2xs group focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
         >
           <Search className="size-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
           <span className="hidden sm:inline">Search</span>

@@ -57,16 +57,16 @@ export function TaskItem({ task, startISO, endISO, timeZone }: TaskItemProps) {
               : `Mark "${task.title}" as complete`
           }
           className={cn(
-            "size-5 rounded-md border border-border hover:border-foreground flex items-center justify-center transition-colors shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
+            "size-7 sm:size-6 rounded-md border border-border hover:border-foreground flex items-center justify-center transition-colors shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring cursor-pointer touch-manipulation",
             isCompleted && "border-emerald-500/50 bg-emerald-500/10"
           )}
         >
           {isPending ? (
-            <Loader2 className="size-3 animate-spin text-muted-foreground" />
+            <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
           ) : isCompleted ? (
             <CheckCircle2 className="size-4 text-emerald-500 fill-emerald-500/20" />
           ) : (
-            <Circle className="size-3 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
+            <Circle className="size-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
           )}
         </button>
 

@@ -38,7 +38,7 @@ export function InstallPrompt() {
         <Button
           size="xs"
           onClick={handleInstall}
-          className="gap-1.5 font-mono text-[11px] h-7"
+          className="gap-1.5 font-mono text-[11px] min-h-[32px] px-2.5 touch-manipulation"
         >
           <Download className="size-3" />
           <span>Install</span>
@@ -48,7 +48,7 @@ export function InstallPrompt() {
           size="icon-xs"
           onClick={() => setDismissed(true)}
           aria-label="Dismiss installation prompt"
-          className="size-7 text-muted-foreground hover:text-foreground"
+          className="size-8 text-muted-foreground hover:text-foreground touch-manipulation"
         >
           <X className="size-3.5" />
         </Button>

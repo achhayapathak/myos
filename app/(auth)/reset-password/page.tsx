@@ -73,7 +73,7 @@ export default function ResetPasswordPage() {
             autoComplete="new-password"
             autoFocus
             disabled={loading}
-            className="font-mono text-xs"
+            className="font-mono text-base sm:text-xs"
           />
         </div>
 
@@ -93,14 +93,14 @@ export default function ResetPasswordPage() {
             required
             autoComplete="new-password"
             disabled={loading}
-            className="font-mono text-xs"
+            className="font-mono text-base sm:text-xs"
           />
         </div>
 
         <Button
           type="submit"
           disabled={loading}
-          className="w-full gap-2 font-mono text-xs mt-2"
+          className="w-full min-h-[40px] gap-2 font-mono text-xs mt-2 touch-manipulation"
         >
           {loading ? (
             <>

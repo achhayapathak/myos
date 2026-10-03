@@ -77,14 +77,14 @@ export default function ForgotPasswordPage() {
               autoComplete="email"
               autoFocus
               disabled={loading}
-              className="font-mono text-xs"
+              className="font-mono text-base sm:text-xs"
             />
           </div>
 
           <Button
             type="submit"
             disabled={loading}
-            className="w-full gap-2 font-mono text-xs mt-2"
+            className="w-full min-h-[40px] gap-2 font-mono text-xs mt-2 touch-manipulation"
           >
             {loading ? (
               <>
@@ -109,7 +109,7 @@ export default function ForgotPasswordPage() {
       <div className="pt-2 text-center">
         <Link
           href="/login"
-          className="inline-flex items-center gap-1.5 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-1.5 min-h-[36px] py-1 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
         >
           <ArrowLeft className="size-3" />
           <span>Back to sign in</span>

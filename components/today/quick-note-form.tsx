@@ -68,7 +68,7 @@ export function QuickNoteForm() {
             onKeyDown={handleKeyDown}
             disabled={isPending}
             placeholder="Jot down quick thoughts, scratchpad ideas, meeting takeaways... (⌘+Enter to save)"
-            className="w-full resize-none rounded-lg border border-border/60 bg-muted/20 p-3 text-xs font-mono text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+            className="w-full resize-none rounded-lg border border-border/60 bg-muted/20 p-3 text-base sm:text-xs font-mono text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
             required
           />
         </div>
@@ -83,7 +83,7 @@ export function QuickNoteForm() {
               type="submit"
               size="sm"
               disabled={isPending || !content.trim()}
-              className="gap-1.5 font-mono text-xs h-7 cursor-pointer"
+              className="gap-1.5 font-mono text-xs h-8 sm:h-7.5 min-h-[36px] px-3.5 cursor-pointer touch-manipulation"
             >
               {isPending ? (
                 <Loader2 className="size-3 animate-spin" />

@@ -18,33 +18,33 @@ export function SessionStats({
   return (
     <div className="flex flex-col gap-5 w-full max-w-xl mx-auto">
       {/* 3 Metric Summary Cards */}
-      <div className="grid grid-cols-3 gap-3 w-full">
-        <div className="p-3.5 rounded-xl border border-border/70 bg-card text-center shadow-2xs">
-          <div className="text-xl sm:text-2xl font-bold font-mono text-foreground flex items-center justify-center gap-1">
-            <CheckCircle className="size-4 text-emerald-500" />
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full">
+        <div className="p-2 sm:p-3.5 rounded-xl border border-border/70 bg-card text-center shadow-2xs">
+          <div className="text-lg sm:text-2xl font-bold font-mono text-foreground flex items-center justify-center gap-1">
+            <CheckCircle className="size-3.5 sm:size-4 text-emerald-500" />
             <span>{focusCount}</span>
           </div>
-          <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mt-0.5">
+          <div className="text-[9px] sm:text-[10px] font-mono text-muted-foreground uppercase tracking-wider mt-0.5 truncate">
             Focus Blocks
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl border border-border/70 bg-card text-center shadow-2xs">
-          <div className="text-xl sm:text-2xl font-bold font-mono text-foreground flex items-center justify-center gap-1">
-            <Clock className="size-4 text-primary" />
+        <div className="p-2 sm:p-3.5 rounded-xl border border-border/70 bg-card text-center shadow-2xs">
+          <div className="text-lg sm:text-2xl font-bold font-mono text-foreground flex items-center justify-center gap-1">
+            <Clock className="size-3.5 sm:size-4 text-primary" />
             <span>{totalFocusMinutes}m</span>
           </div>
-          <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mt-0.5">
+          <div className="text-[9px] sm:text-[10px] font-mono text-muted-foreground uppercase tracking-wider mt-0.5 truncate">
             Focused Today
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl border border-border/70 bg-card text-center shadow-2xs">
-          <div className="text-xl sm:text-2xl font-bold font-mono text-foreground flex items-center justify-center gap-1">
-            <Flame className="size-4 text-amber-500" />
+        <div className="p-2 sm:p-3.5 rounded-xl border border-border/70 bg-card text-center shadow-2xs">
+          <div className="text-lg sm:text-2xl font-bold font-mono text-foreground flex items-center justify-center gap-1">
+            <Flame className="size-3.5 sm:size-4 text-amber-500" />
             <span>{Math.round(totalFocusMinutes / 25)}</span>
           </div>
-          <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mt-0.5">
+          <div className="text-[9px] sm:text-[10px] font-mono text-muted-foreground uppercase tracking-wider mt-0.5 truncate">
             Cycles Done
           </div>
         </div>

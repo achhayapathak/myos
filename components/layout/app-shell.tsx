@@ -17,7 +17,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Main Content Column */}
         <div className="flex flex-1 flex-col min-w-0">
           <Topbar />
-          <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-6xl w-full mx-auto pb-24 md:pb-8">
+          <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-6xl w-full mx-auto pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-8">
             <InstallPrompt />
             {children}
           </main>

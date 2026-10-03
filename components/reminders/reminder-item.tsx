@@ -57,7 +57,7 @@ export function ReminderItem({
           onClick={handleToggle}
           disabled={isPending}
           aria-label={`Mark reminder "${reminder.title}" as ${isCompleted ? "incomplete" : "complete"}`}
-          className={`size-5 rounded-md border flex items-center justify-center transition-all shrink-0 cursor-pointer ${
+          className={`size-7.5 sm:size-6 rounded-md border flex items-center justify-center transition-all shrink-0 cursor-pointer touch-manipulation ${
             isCompleted
               ? "bg-primary border-primary text-primary-foreground"
               : isPastDue
@@ -65,7 +65,7 @@ export function ReminderItem({
               : "border-muted-foreground/40 hover:border-foreground hover:bg-foreground/5"
           }`}
         >
-          {isCompleted && <Check className="size-3 stroke-[3]" />}
+          {isCompleted && <Check className="size-3.5 sm:size-3 stroke-[3]" />}
         </button>
 
         {/* Content */}
@@ -118,7 +118,7 @@ export function ReminderItem({
           onClick={() => onEdit(reminder)}
           disabled={isPending}
           aria-label={`Edit reminder "${reminder.title}"`}
-          className="size-7 text-muted-foreground hover:text-foreground"
+          className="size-8 sm:size-7 text-muted-foreground hover:text-foreground touch-manipulation"
         >
           <Edit2 className="size-3.5" />
         </Button>
@@ -129,7 +129,7 @@ export function ReminderItem({
           onClick={handleDelete}
           disabled={isPending}
           aria-label={`Delete reminder "${reminder.title}"`}
-          className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          className="size-8 sm:size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 touch-manipulation"
         >
           {isPending ? (
             <Loader2 className="size-3.5 animate-spin" />

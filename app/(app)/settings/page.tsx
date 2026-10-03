@@ -65,7 +65,7 @@ export default function SettingsPage() {
               <input
                 type="text"
                 defaultValue="Achhaya Pathak (Owner)"
-                className="h-8 rounded-lg border border-border/60 bg-muted/20 px-3 text-xs font-mono text-foreground outline-hidden"
+                className="h-8 rounded-lg border border-border/60 bg-muted/20 px-3 text-base sm:text-xs font-mono text-foreground outline-hidden"
                 readOnly
               />
             </div>
@@ -74,7 +74,7 @@ export default function SettingsPage() {
               <input
                 type="text"
                 defaultValue="Asia/Kolkata (IST, UTC+05:30)"
-                className="h-8 rounded-lg border border-border/60 bg-muted/20 px-3 text-xs font-mono text-foreground outline-hidden"
+                className="h-8 rounded-lg border border-border/60 bg-muted/20 px-3 text-base sm:text-xs font-mono text-foreground outline-hidden"
                 readOnly
               />
             </div>
@@ -118,7 +118,7 @@ export default function SettingsPage() {
                 variant="outline"
                 size="sm"
                 type="submit"
-                className="gap-1.5 font-mono text-xs text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                className="gap-1.5 font-mono text-xs text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer min-h-[36px] touch-manipulation"
               >
                 <LogOut className="size-3.5" />
                 <span>Sign out</span>

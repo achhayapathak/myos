@@ -79,12 +79,12 @@ export function QuickTaskForm() {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="What needs to be done? (e.g. Deploy release, update docs...)"
             disabled={isPending}
-            className="flex-1 text-xs font-sans h-8.5 bg-muted/20"
+            className="flex-1 text-base sm:text-xs font-sans h-9 sm:h-8.5 bg-muted/20"
             autoComplete="off"
             required
           />
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center flex-wrap sm:flex-nowrap gap-2">
             {/* Priority Selector */}
             <div
               role="radiogroup"
@@ -99,7 +99,7 @@ export function QuickTaskForm() {
                   aria-checked={priority === p}
                   onClick={() => setPriority(p)}
                   className={cn(
-                    "px-2 py-0.5 rounded capitalize transition-all cursor-pointer",
+                    "px-2.5 py-1 min-h-[30px] rounded capitalize transition-all cursor-pointer touch-manipulation",
                     priority === p
                       ? p === "high"
                         ? "bg-destructive text-destructive-foreground font-semibold"
@@ -117,7 +117,7 @@ export function QuickTaskForm() {
               type="button"
               onClick={() => setDueToday(!dueToday)}
               className={cn(
-                "inline-flex items-center gap-1 px-2.5 h-7 rounded-lg border text-[11px] font-mono transition-colors shrink-0 cursor-pointer",
+                "inline-flex items-center gap-1 px-2.5 h-8 sm:h-7.5 rounded-lg border text-[11px] font-mono transition-colors shrink-0 cursor-pointer touch-manipulation",
                 dueToday
                   ? "border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium"
                   : "border-border/60 bg-muted/20 text-muted-foreground hover:text-foreground"
@@ -132,7 +132,7 @@ export function QuickTaskForm() {
               type="submit"
               size="sm"
               disabled={isPending || !title.trim()}
-              className="font-mono text-xs gap-1.5 h-7 shrink-0 cursor-pointer"
+              className="font-mono text-xs gap-1.5 h-8 sm:h-7.5 px-3 shrink-0 cursor-pointer touch-manipulation"
             >
               {isPending ? (
                 <Loader2 className="size-3.5 animate-spin" />

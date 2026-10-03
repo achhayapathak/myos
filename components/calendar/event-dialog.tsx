@@ -199,7 +199,7 @@ function EventDialogContentInner({
   }
 
   return (
-    <DialogContent className="sm:max-w-lg">
+    <DialogContent className="sm:max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold flex items-center gap-2">
@@ -234,15 +234,15 @@ function EventDialogContentInner({
             onChange={(e) => setTitle(e.target.value)}
             disabled={loading || deleting}
             autoFocus
-            className="text-sm font-medium"
+            className="text-base sm:text-sm font-medium"
           />
         </div>
 
         {/* All Day Toggle */}
-        <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+        <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-3 py-2 min-h-[44px]">
           <div className="flex items-center gap-2">
             <Clock className="size-3.5 text-muted-foreground" />
-            <label htmlFor="all-day-toggle" className="text-xs font-medium cursor-pointer">
+            <label htmlFor="all-day-toggle" className="text-xs font-medium cursor-pointer touch-manipulation">
               All-Day Event
             </label>
           </div>
@@ -252,7 +252,7 @@ function EventDialogContentInner({
             checked={allDay}
             onChange={(e) => setAllDay(e.target.checked)}
             disabled={loading || deleting}
-            className="size-4 rounded border-border text-primary focus:ring-primary accent-primary cursor-pointer"
+            className="size-5 rounded border-border text-primary focus:ring-primary accent-primary cursor-pointer touch-manipulation"
           />
         </div>
 
@@ -273,7 +273,7 @@ function EventDialogContentInner({
                 }
               }}
               disabled={loading || deleting}
-              className="font-mono text-xs"
+              className="font-mono text-base sm:text-xs"
             />
           </div>
 
@@ -291,7 +291,7 @@ function EventDialogContentInner({
                   setEndTime(computeDefaultEndTime(e.target.value))
                 }}
                 disabled={loading || deleting}
-                className="font-mono text-xs"
+                className="font-mono text-base sm:text-xs"
               />
             </div>
           )}

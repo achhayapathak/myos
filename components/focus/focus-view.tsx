@@ -339,7 +339,7 @@ export function FocusView({ initialData }: FocusViewProps) {
       )}
 
       {/* Mode Selector Tabs (only clickable in IDLE or when complete) */}
-      <div className="flex items-center gap-1 p-1 rounded-xl border border-border/60 bg-muted/30 text-xs font-mono">
+      <div className="grid grid-cols-3 gap-1 p-1 rounded-xl border border-border/60 bg-muted/30 text-xs font-mono w-full max-w-md">
         <button
           type="button"
           disabled={state === "FOCUSING" || state === "SHORT_BREAK"}
@@ -348,14 +348,15 @@ export function FocusView({ initialData }: FocusViewProps) {
             setActiveSession(null)
           }}
           className={cn(
-            "px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-medium select-none",
+            "py-2 px-1 rounded-lg transition-all cursor-pointer font-medium select-none text-center touch-manipulation min-h-[36px]",
             selectedType === "focus"
               ? "bg-foreground text-background font-semibold shadow-xs"
               : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
             (state === "FOCUSING" || state === "SHORT_BREAK") && "opacity-60 cursor-not-allowed"
           )}
         >
-          Focus (25m)
+          <span>Focus</span>
+          <span className="text-[10px] opacity-75 ml-1">25m</span>
         </button>
 
         <button
@@ -366,14 +367,15 @@ export function FocusView({ initialData }: FocusViewProps) {
             setActiveSession(null)
           }}
           className={cn(
-            "px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-medium select-none",
+            "py-2 px-1 rounded-lg transition-all cursor-pointer font-medium select-none text-center touch-manipulation min-h-[36px]",
             selectedType === "short_break"
               ? "bg-foreground text-background font-semibold shadow-xs"
               : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
             (state === "FOCUSING" || state === "SHORT_BREAK") && "opacity-60 cursor-not-allowed"
           )}
         >
-          Short Break (5m)
+          <span>Short</span>
+          <span className="text-[10px] opacity-75 ml-1">5m</span>
         </button>
 
         <button
@@ -384,19 +386,20 @@ export function FocusView({ initialData }: FocusViewProps) {
             setActiveSession(null)
           }}
           className={cn(
-            "px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-medium select-none",
+            "py-2 px-1 rounded-lg transition-all cursor-pointer font-medium select-none text-center touch-manipulation min-h-[36px]",
             selectedType === "long_break"
               ? "bg-foreground text-background font-semibold shadow-xs"
               : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
             (state === "FOCUSING" || state === "SHORT_BREAK") && "opacity-60 cursor-not-allowed"
           )}
         >
-          Long Break (15m)
+          <span>Long</span>
+          <span className="text-[10px] opacity-75 ml-1">15m</span>
         </button>
       </div>
 
       {/* Main Timer Card */}
-      <div className="w-full max-w-xl rounded-2xl border border-border/70 bg-card p-6 sm:p-8 shadow-xs flex flex-col items-center justify-center gap-4">
+      <div className="w-full max-w-xl rounded-2xl border border-border/70 bg-card p-4 sm:p-8 shadow-xs flex flex-col items-center justify-center gap-4">
         {/* SVG Circular Countdown Display */}
         <PomodoroTimerDisplay
           state={state}

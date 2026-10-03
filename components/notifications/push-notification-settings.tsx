@@ -173,7 +173,7 @@ export function PushNotificationSettings() {
               size="sm"
               onClick={handleSubscribe}
               disabled={isLoading || actionPending}
-              className="gap-2 font-mono text-xs cursor-pointer"
+              className="gap-2 font-mono text-xs cursor-pointer min-h-[36px] touch-manipulation"
             >
               {actionPending ? (
                 <RefreshCw className="size-3.5 animate-spin" />
@@ -189,7 +189,7 @@ export function PushNotificationSettings() {
                 size="sm"
                 onClick={handleSendTest}
                 disabled={isLoading || actionPending}
-                className="gap-2 font-mono text-xs cursor-pointer"
+                className="gap-2 font-mono text-xs cursor-pointer min-h-[36px] touch-manipulation"
               >
                 {actionPending ? (
                   <RefreshCw className="size-3.5 animate-spin" />
@@ -204,7 +204,7 @@ export function PushNotificationSettings() {
                 size="sm"
                 onClick={handleUnsubscribe}
                 disabled={isLoading || actionPending}
-                className="gap-2 font-mono text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                className="gap-2 font-mono text-xs text-muted-foreground hover:text-foreground cursor-pointer min-h-[36px] touch-manipulation"
               >
                 <BellOff className="size-3.5" />
                 <span>Disable on This Device</span>
@@ -216,7 +216,7 @@ export function PushNotificationSettings() {
                   size="sm"
                   onClick={handleRevokeAll}
                   disabled={isLoading || actionPending}
-                  className="gap-2 font-mono text-xs text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer ml-auto"
+                  className="gap-2 font-mono text-xs text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer ml-auto min-h-[36px] touch-manipulation"
                 >
                   <Trash2 className="size-3.5" />
                   <span>Revoke All Devices ({deviceCount})</span>

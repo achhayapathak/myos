@@ -235,13 +235,13 @@ export function CalendarView({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           {/* View Switcher */}
           <div className="flex items-center rounded-lg border border-border/60 bg-muted/40 p-0.5 text-xs font-mono">
             <button
               type="button"
               onClick={() => handleViewChange("dayGridMonth")}
-              className={`px-3 py-1.5 rounded-md font-semibold transition-all ${
+              className={`px-2.5 sm:px-3 py-1.5 min-h-[32px] rounded-md font-semibold transition-all cursor-pointer touch-manipulation ${
                 currentView === "dayGridMonth"
                   ? "bg-background text-foreground shadow-2xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -252,7 +252,7 @@ export function CalendarView({
             <button
               type="button"
               onClick={() => handleViewChange("timeGridWeek")}
-              className={`px-3 py-1.5 rounded-md font-semibold transition-all ${
+              className={`px-2.5 sm:px-3 py-1.5 min-h-[32px] rounded-md font-semibold transition-all cursor-pointer touch-manipulation ${
                 currentView === "timeGridWeek"
                   ? "bg-background text-foreground shadow-2xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -263,7 +263,7 @@ export function CalendarView({
             <button
               type="button"
               onClick={() => handleViewChange("timeGridDay")}
-              className={`px-3 py-1.5 rounded-md font-semibold transition-all ${
+              className={`px-2.5 sm:px-3 py-1.5 min-h-[32px] rounded-md font-semibold transition-all cursor-pointer touch-manipulation ${
                 currentView === "timeGridDay"
                   ? "bg-background text-foreground shadow-2xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -276,7 +276,7 @@ export function CalendarView({
           <Button
             size="sm"
             onClick={handleNewEventBtn}
-            className="gap-1.5 font-mono text-xs shadow-2xs"
+            className="gap-1.5 font-mono text-xs shadow-2xs min-h-[34px] px-3 cursor-pointer touch-manipulation"
           >
             <Plus className="size-3.5" />
             <span>New Event</span>
@@ -285,14 +285,14 @@ export function CalendarView({
       </div>
 
       {/* Date Navigation Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl border border-border/60 bg-card shadow-2xs">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 p-2.5 sm:p-3 rounded-xl border border-border/60 bg-card shadow-2xs">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <Button
             variant="outline"
             size="icon-sm"
             onClick={handlePrev}
             aria-label="Previous period"
-            className="size-8"
+            className="size-8 cursor-pointer touch-manipulation"
           >
             <ChevronLeft className="size-4" />
           </Button>
@@ -301,12 +301,12 @@ export function CalendarView({
             size="icon-sm"
             onClick={handleNext}
             aria-label="Next period"
-            className="size-8"
+            className="size-8 cursor-pointer touch-manipulation"
           >
             <ChevronRight className="size-4" />
           </Button>
 
-          <span className="font-semibold text-sm font-sans tracking-tight ml-2">
+          <span className="font-semibold text-xs sm:text-sm font-sans tracking-tight ml-1 sm:ml-2">
             {viewTitle || "Loading calendar..."}
           </span>
         </div>
@@ -316,7 +316,7 @@ export function CalendarView({
             variant="outline"
             size="sm"
             onClick={handleToday}
-            className="font-mono text-xs h-8"
+            className="font-mono text-xs h-8 px-2.5 sm:px-3 cursor-pointer touch-manipulation"
           >
             Jump to Today
           </Button>
@@ -324,7 +324,7 @@ export function CalendarView({
       </div>
 
       {/* FullCalendar Container */}
-      <div className="relative rounded-2xl border border-border/60 bg-card p-3 sm:p-5 shadow-2xs overflow-hidden min-h-[620px]">
+      <div className="relative rounded-2xl border border-border/60 bg-card p-1.5 sm:p-5 shadow-2xs overflow-hidden min-h-[520px] sm:min-h-[620px]">
         {!mounted ? (
           <div className="flex flex-col items-center justify-center min-h-[500px] gap-3 text-muted-foreground">
             <Loader2 className="size-6 animate-spin text-primary" />

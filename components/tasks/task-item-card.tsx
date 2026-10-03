@@ -86,18 +86,18 @@ export function TaskItemCard({
               : `Mark "${task.title}" as completed`
           }
           className={cn(
-            "mt-0.5 sm:mt-0 size-5.5 rounded-md border border-border hover:border-foreground flex items-center justify-center transition-all shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
+            "mt-0.5 sm:mt-0 size-7.5 sm:size-6 rounded-md border border-border hover:border-foreground flex items-center justify-center transition-all shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring cursor-pointer touch-manipulation",
             isCompleted && "border-emerald-500/60 bg-emerald-500/15 text-emerald-500",
             isInProgress && "border-amber-500/60 bg-amber-500/10 text-amber-500",
             isCancelled && "border-border/60 bg-muted/40 text-muted-foreground line-through"
           )}
         >
           {isCompleted ? (
-            <CheckCircle2 className="size-4 text-emerald-500 fill-emerald-500/20" />
+            <CheckCircle2 className="size-4.5 text-emerald-500 fill-emerald-500/20" />
           ) : isInProgress ? (
-            <div className="size-2 rounded-full bg-amber-500 animate-pulse" />
+            <div className="size-2.5 rounded-full bg-amber-500 animate-pulse" />
           ) : (
-            <Circle className="size-3 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
+            <Circle className="size-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
           )}
         </button>
 
@@ -162,7 +162,7 @@ export function TaskItemCard({
             render={
               <button
                 type="button"
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-border/60 bg-muted/30 text-[10px] font-mono hover:bg-muted transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 min-h-[28px] rounded-full border border-border/60 bg-muted/30 text-[10px] font-mono hover:bg-muted transition-colors cursor-pointer touch-manipulation"
               />
             }
           >
@@ -203,13 +203,13 @@ export function TaskItemCard({
             render={
               <Button
                 variant="ghost"
-                size="icon-xs"
-                className="text-muted-foreground hover:text-foreground cursor-pointer"
+                size="icon-sm"
+                className="size-8 text-muted-foreground hover:text-foreground cursor-pointer touch-manipulation"
                 aria-label="Task options"
               />
             }
           >
-            <MoreHorizontal className="size-3.5" />
+            <MoreHorizontal className="size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem onClick={() => onEdit(task)}>

@@ -170,7 +170,7 @@ export function NotesView({ initialNotes }: NotesViewProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3 h-[calc(100vh-8.5rem)] max-w-6xl mx-auto w-full pb-4">
+    <div className="flex flex-col gap-3 h-[calc(100dvh-8.5rem)] max-w-6xl mx-auto w-full pb-2 md:pb-4">
       {/* Error alert banner */}
       {errorMessage && (
         <div className="flex items-center justify-between gap-2 p-2.5 text-xs rounded-xl border border-destructive/30 bg-destructive/10 text-destructive font-mono animate-in fade-in-0">
@@ -181,7 +181,7 @@ export function NotesView({ initialNotes }: NotesViewProps) {
           <button
             type="button"
             onClick={() => setErrorMessage(null)}
-            className="hover:opacity-75 cursor-pointer"
+            className="hover:opacity-75 cursor-pointer touch-manipulation"
             aria-label="Dismiss error"
           >
             <X className="size-3.5" />
@@ -193,7 +193,7 @@ export function NotesView({ initialNotes }: NotesViewProps) {
       <div className="flex-1 flex overflow-hidden rounded-xl border border-border/70 bg-card shadow-xs">
         {/* Left Column: Notes List */}
         <div
-          className={`w-full md:w-80 md:flex flex-col shrink-0 ${
+          className={`w-full md:w-64 lg:w-80 md:flex flex-col shrink-0 ${
             mobileView === "list" ? "flex" : "hidden md:flex"
           }`}
         >

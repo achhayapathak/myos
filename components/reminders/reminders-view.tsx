@@ -132,7 +132,7 @@ export function RemindersView({
           <Button
             size="sm"
             onClick={openNewReminder}
-            className="gap-1.5 font-mono text-xs shadow-2xs"
+            className="gap-1.5 font-mono text-xs shadow-2xs min-h-[36px] touch-manipulation"
           >
             <Plus className="size-3.5" />
             <span>New Reminder</span>
@@ -145,7 +145,7 @@ export function RemindersView({
         <button
           type="button"
           onClick={() => setActiveFilter("all")}
-          className={`flex flex-col p-3 rounded-xl border text-left transition-all cursor-pointer ${
+          className={`flex flex-col p-3 rounded-xl border text-left transition-all cursor-pointer touch-manipulation active:scale-[0.98] ${
             activeFilter === "all"
               ? "border-primary/50 bg-primary/5 shadow-2xs"
               : "border-border/60 bg-card hover:bg-muted/20"
@@ -160,7 +160,7 @@ export function RemindersView({
         <button
           type="button"
           onClick={() => setActiveFilter("upcoming")}
-          className={`flex flex-col p-3 rounded-xl border text-left transition-all cursor-pointer ${
+          className={`flex flex-col p-3 rounded-xl border text-left transition-all cursor-pointer touch-manipulation active:scale-[0.98] ${
             activeFilter === "upcoming"
               ? "border-primary/50 bg-primary/5 shadow-2xs"
               : "border-border/60 bg-card hover:bg-muted/20"
@@ -178,7 +178,7 @@ export function RemindersView({
         <button
           type="button"
           onClick={() => setActiveFilter("past_due")}
-          className={`flex flex-col p-3 rounded-xl border text-left transition-all cursor-pointer ${
+          className={`flex flex-col p-3 rounded-xl border text-left transition-all cursor-pointer touch-manipulation active:scale-[0.98] ${
             counts.pastDue > 0
               ? activeFilter === "past_due"
                 ? "border-destructive bg-destructive/10 shadow-2xs"
@@ -208,7 +208,7 @@ export function RemindersView({
         <button
           type="button"
           onClick={() => setActiveFilter("completed")}
-          className={`flex flex-col p-3 rounded-xl border text-left transition-all cursor-pointer ${
+          className={`flex flex-col p-3 rounded-xl border text-left transition-all cursor-pointer touch-manipulation active:scale-[0.98] ${
             activeFilter === "completed"
               ? "border-primary/50 bg-primary/5 shadow-2xs"
               : "border-border/60 bg-card hover:bg-muted/20"
@@ -251,13 +251,13 @@ export function RemindersView({
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Filter Tabs */}
-        <div className="flex items-center rounded-lg border border-border/60 bg-muted/30 p-0.5 text-xs font-mono overflow-x-auto">
+        <div className="flex items-center rounded-lg border border-border/60 bg-muted/30 p-0.5 text-xs font-mono overflow-x-auto touch-pan-x">
           {(["all", "upcoming", "past_due", "completed"] as ReminderFilter[]).map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveFilter(tab)}
-              className={`px-3 py-1.5 rounded-md font-semibold capitalize whitespace-nowrap transition-all ${
+              className={`px-3 py-2 sm:py-1.5 rounded-md font-semibold capitalize whitespace-nowrap transition-all touch-manipulation ${
                 activeFilter === tab
                   ? "bg-background text-foreground shadow-2xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -286,7 +286,7 @@ export function RemindersView({
             placeholder="Search reminders..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 text-xs font-mono h-9"
+            className="pl-8 text-base sm:text-xs font-mono h-9"
           />
         </div>
       </div>

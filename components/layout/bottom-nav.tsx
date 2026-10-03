@@ -52,7 +52,7 @@ export function MobileBottomNav() {
     <>
       <nav
         aria-label="Mobile Navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-border/70 bg-background/95 backdrop-blur-md px-2 py-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] select-none"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-border/70 bg-background/95 backdrop-blur-md px-1 sm:px-2 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] select-none"
       >
         <div className="flex items-center justify-around">
           {PRIMARY_MOBILE_ITEMS.map((item) => {
@@ -64,7 +64,7 @@ export function MobileBottomNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center flex-1 py-1 px-2 rounded-lg text-[10px] font-medium transition-all group",
+                  "flex flex-col items-center justify-center flex-1 min-h-[48px] py-1 px-1 sm:px-2 rounded-lg text-[10px] font-medium transition-all group active:scale-95 touch-manipulation",
                   isActive
                     ? "text-foreground font-semibold"
                     : "text-muted-foreground hover:text-foreground"
@@ -89,7 +89,7 @@ export function MobileBottomNav() {
             onClick={() => setMoreOpen(true)}
             aria-label="More navigation options"
             className={cn(
-              "flex flex-col items-center justify-center flex-1 py-1 px-2 rounded-lg text-[10px] font-medium transition-all group",
+              "flex flex-col items-center justify-center flex-1 min-h-[48px] py-1 px-1 sm:px-2 rounded-lg text-[10px] font-medium transition-all group active:scale-95 touch-manipulation cursor-pointer",
               isSecondaryActive || moreOpen
                 ? "text-foreground font-semibold"
                 : "text-muted-foreground hover:text-foreground"
@@ -108,9 +108,15 @@ export function MobileBottomNav() {
         </div>
       </nav>
 
-      {/* Secondary Navigation Dialog */}
+      {/* Secondary Navigation Dialog - Bottom sheet on mobile for one-handed thumb reach */}
       <Dialog open={moreOpen} onOpenChange={setMoreOpen}>
-        <DialogContent className="sm:max-w-md p-4" showCloseButton={false}>
+        <DialogContent
+          className="fixed bottom-0 top-auto left-0 right-0 sm:bottom-auto sm:top-1/2 sm:left-1/2 translate-x-0 sm:-translate-x-1/2 translate-y-0 sm:-translate-y-1/2 w-full max-w-full sm:max-w-md rounded-b-none sm:rounded-xl rounded-t-2xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-popover ring-1 ring-foreground/10 shadow-xl"
+          showCloseButton={false}
+        >
+          {/* Subtle drag handle visual for bottom sheet */}
+          <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto -mt-1 mb-2 sm:hidden" />
+
           <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-border/60">
             <div>
               <DialogTitle className="text-sm font-semibold">More Sections</DialogTitle>
@@ -121,7 +127,7 @@ export function MobileBottomNav() {
             <button
               type="button"
               onClick={() => setMoreOpen(false)}
-              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              className="p-2 -mr-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <X className="size-4" />
               <span className="sr-only">Close</span>
@@ -136,7 +142,7 @@ export function MobileBottomNav() {
                 setMoreOpen(false)
                 setCommandPaletteOpen(true)
               }}
-              className="flex items-center justify-between w-full p-2.5 rounded-lg text-xs transition-colors bg-muted/40 hover:bg-muted/70 text-foreground text-left cursor-pointer border border-border/40 mb-1"
+              className="flex items-center justify-between w-full min-h-[44px] p-2.5 rounded-lg text-xs transition-colors bg-muted/40 hover:bg-muted/70 active:bg-muted/90 text-foreground text-left cursor-pointer border border-border/40 mb-1 touch-manipulation"
             >
               <div className="flex items-center gap-3">
                 <div className="p-1.5 rounded-md bg-foreground text-background">
@@ -161,7 +167,7 @@ export function MobileBottomNav() {
                   href={item.href}
                   onClick={() => setMoreOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 p-2.5 rounded-lg text-xs transition-colors",
+                    "flex items-center gap-3 min-h-[44px] p-2.5 rounded-lg text-xs transition-colors active:bg-muted/90 touch-manipulation",
                     isActive
                       ? "bg-foreground/10 text-foreground font-medium"
                       : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
@@ -196,7 +202,7 @@ export function MobileBottomNav() {
                 setMoreOpen(false)
                 logout()
               }}
-              className="flex w-full items-center gap-2 p-2 rounded-lg text-xs font-mono text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+              className="flex w-full items-center gap-2.5 min-h-[44px] p-2 rounded-lg text-xs font-mono text-destructive hover:bg-destructive/10 active:bg-destructive/20 transition-colors cursor-pointer touch-manipulation"
             >
               <LogOut className="size-4" />
               <span>Sign out of MyOS</span>

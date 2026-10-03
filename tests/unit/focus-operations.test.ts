@@ -335,5 +335,14 @@ describe("Focus / Pomodoro Server Actions & Security Tests", () => {
       expect(focusViewContent).toContain("isSessionRunning")
       expect(focusViewContent).toContain("visibilitychange")
     })
+
+    it("ensures components/ui/dropdown-menu.tsx DropdownMenuLabel does not require MenuGroupContext", () => {
+      const dropdownMenuContent = fs.readFileSync(
+        path.join(rootDir, "components/ui/dropdown-menu.tsx"),
+        "utf-8"
+      )
+      // Must not use MenuPrimitive.GroupLabel directly which crashes if not enclosed in DropdownMenuGroup
+      expect(dropdownMenuContent).not.toContain("MenuPrimitive.GroupLabel")
+    })
   })
 })

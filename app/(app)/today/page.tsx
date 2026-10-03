@@ -64,20 +64,20 @@ export default async function TodayPage() {
             timeZone={bounds.timeZone}
           />
 
+          {/* Quick Note / Scratchpad Creation */}
+          <QuickNoteForm />
+        </div>
+
+        {/* Companion Right Column: Focus Status, Reminders & Upcoming Schedule */}
+        <div className="lg:col-span-5 flex flex-col gap-5">
+          {/* Pomodoro & Focus Status */}
+          <FocusStatusCard summary={focusSummary} />
+
           {/* Reminders Section */}
           <TodayReminders
             initialReminders={reminders}
             timeZone={bounds.timeZone}
           />
-
-          {/* Quick Note / Scratchpad Creation */}
-          <QuickNoteForm />
-        </div>
-
-        {/* Companion Right Column: Focus Status & Upcoming Schedule */}
-        <div className="lg:col-span-5 flex flex-col gap-5">
-          {/* Pomodoro & Focus Status */}
-          <FocusStatusCard summary={focusSummary} />
 
           {/* Upcoming Calendar Events */}
           <UpcomingEvents

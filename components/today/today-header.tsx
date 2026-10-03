@@ -1,23 +1,26 @@
 import Link from "next/link"
 import {
   Sun,
-  Plus,
   Play,
   CheckCircle2,
   Clock,
+  Bell,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { DigitalClock } from "./digital-clock"
 
 interface TodayHeaderProps {
   displayName: string
   formattedDate: string
   greeting: string
   pendingDueCount: number
-  highPriorityCount: number
+  highPriorityCount?: number
+  remindersCount?: number
   completedTodayCount: number
   focusMinutesToday: number
+  timeZone?: string
 }
 
 export function TodayHeader({
@@ -25,9 +28,11 @@ export function TodayHeader({
   formattedDate,
   greeting,
   pendingDueCount,
-  highPriorityCount,
+  highPriorityCount = 0,
+  remindersCount = 0,
   completedTodayCount,
   focusMinutesToday,
+  timeZone = "Asia/Kolkata",
 }: TodayHeaderProps) {
   return (
     <div className="flex flex-col gap-4 border-b border-border/60 pb-5">
@@ -45,7 +50,9 @@ export function TodayHeader({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5">
+          <DigitalClock timeZone={timeZone} />
+
           <Link
             href="/focus"
             className={cn(
@@ -56,16 +63,6 @@ export function TodayHeader({
             <Play className="size-3.5 fill-current" />
             <span>Focus Mode</span>
           </Link>
-          <a
-            href="#quick-task"
-            className={cn(
-              buttonVariants({ variant: "default", size: "sm" }),
-              "gap-1.5 text-xs font-mono min-h-[36px] sm:min-h-0 px-3 touch-manipulation"
-            )}
-          >
-            <Plus className="size-3.5" />
-            <span>Add Task</span>
-          </a>
         </div>
       </div>
 
@@ -75,6 +72,16 @@ export function TodayHeader({
           <span className="size-1.5 rounded-full bg-amber-500" />
           <span>{pendingDueCount} due today</span>
         </Badge>
+
+        {remindersCount > 0 && (
+          <Badge
+            variant="outline"
+            className="gap-1.5 font-mono text-[11px] py-1 px-2.5 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-950/20"
+          >
+            <Bell className="size-3 text-blue-500" />
+            <span>{remindersCount} {remindersCount === 1 ? "reminder" : "reminders"}</span>
+          </Badge>
+        )}
 
         {highPriorityCount > 0 && (
           <Badge

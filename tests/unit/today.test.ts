@@ -81,9 +81,11 @@ describe("Today Dashboard Unit Tests", () => {
     it("verifies all reusable components exist under components/today", () => {
       const expectedComponents = [
         "today-header.tsx",
+        "digital-clock.tsx",
         "task-item.tsx",
         "tasks-due-today.tsx",
         "high-priority-tasks.tsx",
+        "today-reminders.tsx",
         "upcoming-events.tsx",
         "focus-status-card.tsx",
         "quick-task-form.tsx",
@@ -95,6 +97,51 @@ describe("Today Dashboard Unit Tests", () => {
         const compPath = path.join(rootDir, "components/today", comp)
         expect(fs.existsSync(compPath)).toBe(true)
       }
+    })
+
+    it("verifies components/today/today-reminders.tsx is a client component", () => {
+      const filePath = path.join(rootDir, "components/today/today-reminders.tsx")
+      const content = fs.readFileSync(filePath, "utf-8")
+      expect(content).toMatch(/^["']use client["']/)
+    })
+
+    it("verifies components/today/digital-clock.tsx is a client component", () => {
+      const filePath = path.join(rootDir, "components/today/digital-clock.tsx")
+      const content = fs.readFileSync(filePath, "utf-8")
+      expect(content).toMatch(/^["']use client["']/)
+    })
+
+    it("formats digital clock time in hh:mm 12-hour format for Asia/Kolkata", async () => {
+      const { formatDigitalClock } = await import("@/components/today/digital-clock")
+
+      // 03:35 UTC corresponds to 09:05 AM IST
+      const morningDate = new Date("2026-10-03T03:35:00.000Z")
+      const morningRes = formatDigitalClock(morningDate, "Asia/Kolkata")
+      expect(morningRes.hour).toBe("09")
+      expect(morningRes.minute).toBe("05")
+      expect(morningRes.meridiem).toBe("AM")
+      expect(morningRes.formatted).toBe("09:05 AM")
+
+      // 18:30 UTC corresponds to 12:00 AM IST (midnight)
+      const midnightDate = new Date("2026-10-03T18:30:00.000Z")
+      const midnightRes = formatDigitalClock(midnightDate, "Asia/Kolkata")
+      expect(midnightRes.hour).toBe("12")
+      expect(midnightRes.minute).toBe("00")
+      expect(midnightRes.meridiem).toBe("AM")
+
+      // 06:30 UTC corresponds to 12:00 PM IST (noon)
+      const noonDate = new Date("2026-10-03T06:30:00.000Z")
+      const noonRes = formatDigitalClock(noonDate, "Asia/Kolkata")
+      expect(noonRes.hour).toBe("12")
+      expect(noonRes.minute).toBe("00")
+      expect(noonRes.meridiem).toBe("PM")
+    })
+
+    it("verifies Today page renders TodayReminders instead of HighPriorityTasks", () => {
+      const pagePath = path.join(rootDir, "app/(app)/today/page.tsx")
+      const content = fs.readFileSync(pagePath, "utf-8")
+      expect(content).toContain("TodayReminders")
+      expect(content).not.toContain("<HighPriorityTasks")
     })
   })
 

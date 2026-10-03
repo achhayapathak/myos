@@ -3,7 +3,7 @@ import { getTodayDashboardData } from "@/lib/today-data"
 import {
   TodayHeader,
   TasksDueToday,
-  HighPriorityTasks,
+  TodayReminders,
   UpcomingEvents,
   FocusStatusCard,
   QuickTaskForm,
@@ -26,14 +26,14 @@ export default async function TodayPage() {
     user,
     bounds,
     tasksDueToday,
-    highPriorityTasks,
+    reminders,
     completedTasksTodayCount,
     upcomingEvents,
     focusSummary,
   } = data
 
   const pendingDueCount = tasksDueToday.filter((t) => t.status !== "completed").length
-  const pendingHighCount = highPriorityTasks.filter((t) => t.status !== "completed").length
+  const pendingRemindersCount = reminders.filter((r) => !r.completed).length
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto pb-12">
@@ -42,8 +42,9 @@ export default async function TodayPage() {
         displayName={user.displayName || "there"}
         formattedDate={bounds.formattedDate}
         greeting={bounds.greeting}
+        timeZone="Asia/Kolkata"
         pendingDueCount={pendingDueCount}
-        highPriorityCount={pendingHighCount}
+        remindersCount={pendingRemindersCount}
         completedTodayCount={completedTasksTodayCount}
         focusMinutesToday={focusSummary.totalFocusMinutesToday}
       />
@@ -63,11 +64,9 @@ export default async function TodayPage() {
             timeZone={bounds.timeZone}
           />
 
-          {/* High-Priority Incomplete Tasks */}
-          <HighPriorityTasks
-            tasks={highPriorityTasks}
-            startISO={bounds.startISO}
-            endISO={bounds.endISO}
+          {/* Reminders Section */}
+          <TodayReminders
+            initialReminders={reminders}
             timeZone={bounds.timeZone}
           />
 

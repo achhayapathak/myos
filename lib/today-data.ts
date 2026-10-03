@@ -1,7 +1,7 @@
 import "server-only"
 import { createClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/supabase/auth"
-import type { Task, Event, PomodoroSession } from "@/types/database"
+import type { Task, Event, PomodoroSession, Reminder } from "@/types/database"
 import {
   getTodayDateBounds,
   type TodayDateBounds,
@@ -24,7 +24,8 @@ export interface TodayDashboardData {
   }
   bounds: TodayDateBounds
   tasksDueToday: Task[]
-  highPriorityTasks: Task[]
+  highPriorityTasks?: Task[]
+  reminders: Reminder[]
   completedTasksTodayCount: number
   upcomingEvents: Event[]
   focusSummary: FocusSummary
@@ -56,7 +57,7 @@ export async function getTodayDashboardData(): Promise<TodayDashboardData | null
   // 2. Execute queries in parallel
   const [
     dueTodayResult,
-    highPriorityResult,
+    remindersResult,
     completedTodayResult,
     eventsResult,
     sessionsResult,
@@ -70,15 +71,13 @@ export async function getTodayDashboardData(): Promise<TodayDashboardData | null
       .lte("due_at", bounds.endISO)
       .order("due_at", { ascending: true }),
 
-    // B. High-priority incomplete tasks
+    // B. Active reminders ordered by remind_at ASC
     supabase
-      .from("tasks")
+      .from("reminders")
       .select("*")
       .eq("user_id", user.id)
-      .eq("priority", "high")
-      .in("status", ["todo", "in_progress"])
-      .order("due_at", { ascending: true, nullsFirst: false })
-      .order("created_at", { ascending: false })
+      .eq("completed", false)
+      .order("remind_at", { ascending: true })
       .limit(10),
 
     // C. Completed tasks count for today
@@ -110,8 +109,9 @@ export async function getTodayDashboardData(): Promise<TodayDashboardData | null
   // Process tasks due today
   const tasksDueToday: Task[] = dueTodayResult.data || []
 
-  // Process high-priority tasks
-  const highPriorityTasks: Task[] = highPriorityResult.data || []
+  // Process active reminders
+  const reminders: Reminder[] = (remindersResult.data as Reminder[]) || []
+  const highPriorityTasks: Task[] = []
 
   // Process completed tasks count
   const completedTasksTodayCount = completedTodayResult.count || 0
@@ -168,6 +168,7 @@ export async function getTodayDashboardData(): Promise<TodayDashboardData | null
     },
     bounds,
     tasksDueToday,
+    reminders,
     highPriorityTasks,
     completedTasksTodayCount,
     upcomingEvents,

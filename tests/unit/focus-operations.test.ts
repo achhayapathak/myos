@@ -322,5 +322,18 @@ describe("Focus / Pomodoro Server Actions & Security Tests", () => {
       )
       expect(actionsContent).toMatch(/^["']use server["']/)
     })
+
+    it("ensures components/focus/focus-view.tsx avoids unstable useSyncExternalStore loops", () => {
+      const focusViewContent = fs.readFileSync(
+        path.join(rootDir, "components/focus/focus-view.tsx"),
+        "utf-8"
+      )
+      // Must not use useSyncExternalStore with dynamic timestamp snapshot which causes infinite re-render loops
+      expect(focusViewContent).not.toContain("useSyncExternalStore(subscribe, getNow")
+      expect(focusViewContent).not.toContain("function getNow(): number")
+      // Must use active-only timer with wake listeners
+      expect(focusViewContent).toContain("isSessionRunning")
+      expect(focusViewContent).toContain("visibilitychange")
+    })
   })
 })

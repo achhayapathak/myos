@@ -63,14 +63,6 @@ function playChime() {
   }
 }
 
-function getNow(): number {
-  return Date.now()
-}
-
-function getServerNow(): number {
-  return 0
-}
-
 interface FocusViewProps {
   initialData: FocusPageData
 }
@@ -96,33 +88,34 @@ export function FocusView({ initialData }: FocusViewProps) {
   const isSessionRunning = Boolean(activeSession && !activeSession.ended_at)
 
   // Subscribes to time ticks only when a session is active.
-  // When idle, no timer is created, eliminating 120 unnecessary React re-renders per minute.
-  const subscribe = React.useCallback(
-    (callback: () => void) => {
-      if (!isSessionRunning) {
-        return () => {}
-      }
+  // When idle, no timer is created, eliminating unnecessary React re-renders.
+  const [currentTime, setCurrentTime] = React.useState<number>(0)
 
-      // 1000ms tick matches countdown second precision without excessive wakeups
-      const interval = setInterval(callback, 1000)
-      const onWake = () => callback()
+  React.useEffect(() => {
+    if (!isSessionRunning) {
+      return
+    }
 
-      document.addEventListener("visibilitychange", onWake)
-      window.addEventListener("focus", onWake)
-      window.addEventListener("online", onWake)
+    const onWake = () => setCurrentTime(Date.now())
 
-      return () => {
-        clearInterval(interval)
-        document.removeEventListener("visibilitychange", onWake)
-        window.removeEventListener("focus", onWake)
-        window.removeEventListener("online", onWake)
-      }
-    },
-    [isSessionRunning]
-  )
+    // Sync immediately on mount / session activation via callback to avoid cascading renders
+    const initialSync = setTimeout(onWake, 0)
 
-  // Track current timestamp externally to guarantee purity and sleep resilience
-  const currentTime = React.useSyncExternalStore(subscribe, getNow, getServerNow)
+    // 1000ms tick matches countdown second precision without excessive wakeups
+    const interval = setInterval(onWake, 1000)
+
+    document.addEventListener("visibilitychange", onWake)
+    window.addEventListener("focus", onWake)
+    window.addEventListener("online", onWake)
+
+    return () => {
+      clearTimeout(initialSync)
+      clearInterval(interval)
+      document.removeEventListener("visibilitychange", onWake)
+      window.removeEventListener("focus", onWake)
+      window.removeEventListener("online", onWake)
+    }
+  }, [isSessionRunning])
 
   // Derived total focus minutes
   const totalFocusMinutes = React.useMemo(() => {

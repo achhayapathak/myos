@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ThemeSelector } from "@/components/settings/theme-selector"
+import { PushNotificationSettings } from "@/components/notifications"
 import { logout } from "@/app/(auth)/actions"
 
 export const metadata = {
@@ -47,6 +48,9 @@ export default function SettingsPage() {
             <ThemeSelector />
           </div>
         </section>
+
+        {/* Web Push Notifications */}
+        <PushNotificationSettings />
 
         {/* Profile & Region */}
         <section className="p-5 rounded-xl border border-border/70 bg-card shadow-xs flex flex-col gap-4">

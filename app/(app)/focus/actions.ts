@@ -9,6 +9,7 @@ import {
   completeSessionSchema,
   cancelSessionSchema,
 } from "@/lib/focus/validations"
+import { notificationService } from "@/lib/notifications/service"
 
 export interface PomodoroActionResponse<T = unknown> {
   success: boolean
@@ -95,16 +96,40 @@ export async function completePomodoroSession(
   const endedAtIso = ended_at || new Date().toISOString()
 
   const supabase = await createClient()
-  const { error } = await supabase
+  const { data: sessionData, error } = await supabase
     .from("pomodoro_sessions")
     .update({
       ended_at: endedAtIso,
     })
     .eq("id", id)
     .eq("user_id", user.id) // Multi-user authorization constraint
+    .select("type, task_id")
+    .single()
 
   if (error) {
     return { success: false, error: error.message }
+  }
+
+  // Best-effort push notification delivery to user's registered devices
+  if (sessionData) {
+    try {
+      let taskTitle: string | null = null
+      if (sessionData.task_id) {
+        const { data: task } = await supabase
+          .from("tasks")
+          .select("title")
+          .eq("id", sessionData.task_id)
+          .single()
+        taskTitle = task?.title || null
+      }
+
+      await notificationService.sendPomodoroPush(supabase, user.id, {
+        type: sessionData.type,
+        taskTitle,
+      })
+    } catch {
+      // Non-blocking: session completion succeeds independently of push delivery
+    }
   }
 
   revalidatePath("/focus")

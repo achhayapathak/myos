@@ -151,3 +151,53 @@ export async function getPendingDeliveries(
 
   return (data as NotificationDelivery[]) ?? []
 }
+
+/**
+ * Dispatches a pending reminder notification delivery via the notification service.
+ */
+export async function dispatchReminderNotificationDelivery(
+  supabase: SupabaseClient<Database>,
+  deliveryId: string,
+  userId: string
+): Promise<DeliveryActionResult<boolean>> {
+  try {
+    const { data: delivery, error } = await supabase
+      .from("notification_deliveries")
+      .select("*")
+      .eq("id", deliveryId)
+      .eq("user_id", userId)
+      .single()
+
+    if (error || !delivery) {
+      return { success: false, error: "Delivery record not found." }
+    }
+
+    if (delivery.status !== "pending") {
+      return { success: false, error: `Delivery is already ${delivery.status}.` }
+    }
+
+    const { notificationService } = await import("./service")
+    const payload = (delivery.payload || {}) as Record<string, unknown>
+    const title = (payload.title as string) || "Reminder"
+    const body = (payload.body as string) || undefined
+
+    const result = await notificationService.sendReminderPush(supabase, userId, {
+      reminderId: delivery.reminder_id || deliveryId,
+      title,
+      body,
+      scheduledAt: delivery.scheduled_at,
+    })
+
+    return {
+      success: result.success,
+      data: result.sentCount > 0,
+      error: result.error,
+    }
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to dispatch reminder delivery.",
+    }
+  }
+}
+

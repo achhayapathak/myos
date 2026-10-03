@@ -1,4 +1,5 @@
 import "server-only"
+import { cache } from "react"
 import { createClient } from "@/lib/supabase/server"
 import type { User, Session } from "@supabase/supabase-js"
 
@@ -7,10 +8,11 @@ import type { User, Session } from "@supabase/supabase-js"
  *
  * Uses `supabase.auth.getUser()` which strictly verifies the JWT against
  * the Supabase Auth server, rather than trusting unverified local cookie claims.
+ * Memoized per server request via React.cache to avoid duplicate network calls.
  *
  * @returns The authenticated `User` object, or `null` if no active/valid session exists.
  */
-export async function getCurrentUser(): Promise<User | null> {
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<User | null> {
   try {
     const supabase = await createClient()
     const {
@@ -26,14 +28,15 @@ export async function getCurrentUser(): Promise<User | null> {
   } catch {
     return null
   }
-}
+})
 
 /**
  * Retrieves the current session server-side.
+ * Memoized per server request via React.cache.
  *
  * @returns The active `Session` object or `null`.
  */
-export async function getSession(): Promise<Session | null> {
+export const getSession = cache(async function getSession(): Promise<Session | null> {
   try {
     const supabase = await createClient()
     const {
@@ -49,7 +52,7 @@ export async function getSession(): Promise<Session | null> {
   } catch {
     return null
   }
-}
+})
 
 /**
  * Asserts that a user is authenticated, throwing an Unauthorized error if not.

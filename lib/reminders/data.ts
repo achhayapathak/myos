@@ -17,25 +17,26 @@ export async function getRemindersPageData(): Promise<RemindersPageData | null> 
 
   const supabase = await createClient()
 
-  // 1. Fetch user timezone from profile
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("timezone")
-    .eq("user_id", user.id)
-    .maybeSingle()
+  // Concurrently fetch user profile and reminders in parallel to eliminate waterfall
+  const [profileResult, remindersResult] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("timezone")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("reminders")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("completed", { ascending: true })
+      .order("remind_at", { ascending: true }),
+  ])
 
-  const timeZone = resolveTimeZone(profile?.timezone)
+  const timeZone = resolveTimeZone(profileResult.data?.timezone)
+  const reminders = remindersResult.data
 
-  // 2. Fetch all user reminders: uncompleted first, then ordered by remind_at
-  const { data: reminders, error } = await supabase
-    .from("reminders")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("completed", { ascending: true })
-    .order("remind_at", { ascending: true })
-
-  if (error) {
-    console.error("Failed to fetch reminders:", error.message)
+  if (remindersResult.error) {
+    console.error("Failed to fetch reminders:", remindersResult.error.message)
   }
 
   return {

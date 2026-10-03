@@ -27,27 +27,29 @@ export async function getTasksPageData(): Promise<TasksPageData | null> {
 
   const supabase = await createClient()
 
-  // Fetch user profile for timezone and display name
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("timezone, display_name")
-    .eq("user_id", user.id)
-    .maybeSingle()
+  // Concurrently fetch user profile and tasks in parallel to avoid sequential waterfall
+  const [profileResult, tasksResult] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("timezone, display_name")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("tasks")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+  ])
 
-  const timeZone = profile?.timezone || "Asia/Kolkata"
-  const bounds = getTodayDateBounds(timeZone)
-
-  // Fetch all tasks owned by this authenticated user
-  const { data: tasks, error } = await supabase
-    .from("tasks")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-
-  if (error) {
-    console.error("Failed to fetch user tasks:", error.message)
+  if (tasksResult.error) {
+    console.error("Failed to fetch user tasks:", tasksResult.error.message)
     return null
   }
+
+  const profile = profileResult.data
+  const tasks = tasksResult.data || []
+  const timeZone = profile?.timezone || "Asia/Kolkata"
+  const bounds = getTodayDateBounds(timeZone)
 
   return {
     user: {

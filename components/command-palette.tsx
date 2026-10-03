@@ -60,12 +60,26 @@ export function useCommandPalette() {
 
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false)
-  const toggle = React.useCallback(() => setOpen((prev) => !prev), [])
+  const [hasOpened, setHasOpened] = React.useState(false)
+
+  const handleSetOpen = React.useCallback(
+    (action: React.SetStateAction<boolean>) => {
+      setHasOpened(true)
+      setOpen(action)
+    },
+    []
+  )
+
+  const toggle = React.useCallback(() => {
+    setHasOpened(true)
+    setOpen((prev) => !prev)
+  }, [])
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
         e.preventDefault()
+        setHasOpened(true)
         setOpen((prev) => !prev)
       }
     }
@@ -75,9 +89,9 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
   }, [])
 
   return (
-    <CommandPaletteContext.Provider value={{ open, setOpen, toggle }}>
+    <CommandPaletteContext.Provider value={{ open, setOpen: handleSetOpen, toggle }}>
       {children}
-      <CommandPalette open={open} onOpenChange={setOpen} />
+      {hasOpened && <CommandPalette open={open} onOpenChange={handleSetOpen} />}
     </CommandPaletteContext.Provider>
   )
 }

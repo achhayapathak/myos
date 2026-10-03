@@ -29,6 +29,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   agentRules: false,
+  experimental: {
+    optimizePackageImports: ["lucide-react", "@base-ui/react"],
+  },
   async headers() {
     return [
       {

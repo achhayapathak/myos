@@ -17,24 +17,25 @@ export async function getCalendarPageData(): Promise<CalendarPageData | null> {
 
   const supabase = await createClient()
 
-  // 1. Fetch user timezone from profile
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("timezone, display_name")
-    .eq("user_id", user.id)
-    .maybeSingle()
+  // Concurrently fetch profile and events in parallel to eliminate waterfall
+  const [profileResult, eventsResult] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("timezone, display_name")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("events")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("start_at", { ascending: true }),
+  ])
 
-  const timeZone = resolveTimeZone(profile?.timezone)
+  const timeZone = resolveTimeZone(profileResult.data?.timezone)
+  const events = eventsResult.data
 
-  // 2. Fetch user events
-  const { data: events, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("start_at", { ascending: true })
-
-  if (error) {
-    console.error("Failed to fetch calendar events:", error.message)
+  if (eventsResult.error) {
+    console.error("Failed to fetch calendar events:", eventsResult.error.message)
   }
 
   return {

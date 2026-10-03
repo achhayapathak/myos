@@ -63,26 +63,6 @@ function playChime() {
   }
 }
 
-/**
- * Subscribes to time ticks and wake-up events (tab visibility, focus, network)
- * without drift or JS throttling issues.
- */
-function subscribeTimer(callback: () => void) {
-  const interval = setInterval(callback, 500)
-  const onWake = () => callback()
-
-  document.addEventListener("visibilitychange", onWake)
-  window.addEventListener("focus", onWake)
-  window.addEventListener("online", onWake)
-
-  return () => {
-    clearInterval(interval)
-    document.removeEventListener("visibilitychange", onWake)
-    window.removeEventListener("focus", onWake)
-    window.removeEventListener("online", onWake)
-  }
-}
-
 function getNow(): number {
   return Date.now()
 }
@@ -113,8 +93,36 @@ export function FocusView({ initialData }: FocusViewProps) {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [isActionPending, startTransition] = React.useTransition()
 
+  const isSessionRunning = Boolean(activeSession && !activeSession.ended_at)
+
+  // Subscribes to time ticks only when a session is active.
+  // When idle, no timer is created, eliminating 120 unnecessary React re-renders per minute.
+  const subscribe = React.useCallback(
+    (callback: () => void) => {
+      if (!isSessionRunning) {
+        return () => {}
+      }
+
+      // 1000ms tick matches countdown second precision without excessive wakeups
+      const interval = setInterval(callback, 1000)
+      const onWake = () => callback()
+
+      document.addEventListener("visibilitychange", onWake)
+      window.addEventListener("focus", onWake)
+      window.addEventListener("online", onWake)
+
+      return () => {
+        clearInterval(interval)
+        document.removeEventListener("visibilitychange", onWake)
+        window.removeEventListener("focus", onWake)
+        window.removeEventListener("online", onWake)
+      }
+    },
+    [isSessionRunning]
+  )
+
   // Track current timestamp externally to guarantee purity and sleep resilience
-  const currentTime = React.useSyncExternalStore(subscribeTimer, getNow, getServerNow)
+  const currentTime = React.useSyncExternalStore(subscribe, getNow, getServerNow)
 
   // Derived total focus minutes
   const totalFocusMinutes = React.useMemo(() => {

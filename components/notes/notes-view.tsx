@@ -65,13 +65,23 @@ export function NotesView({ initialNotes }: NotesViewProps) {
     }
   }, [])
 
-  // Command palette and deep link listener for note creation
+  // Command palette and deep link listener for note creation & selection
   React.useEffect(() => {
     const handleCreateEvent = () => {
       void handleCreateNote()
     }
 
+    const handleSelectNoteEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ noteId: string }>
+      const noteId = customEvent.detail?.noteId
+      if (noteId) {
+        setSelectedNoteId(noteId)
+        setMobileView("editor")
+      }
+    }
+
     window.addEventListener("myos:create-note", handleCreateEvent)
+    window.addEventListener("myos:select-note", handleSelectNoteEvent)
 
     const timer = setTimeout(() => {
       if (typeof window !== "undefined") {
@@ -79,6 +89,13 @@ export function NotesView({ initialNotes }: NotesViewProps) {
         if (params.get("new") === "true" || params.get("create") === "true") {
           void handleCreateNote()
           window.history.replaceState({}, "", window.location.pathname)
+        } else {
+          const noteId = params.get("noteId")
+          if (noteId) {
+            setSelectedNoteId(noteId)
+            setMobileView("editor")
+            window.history.replaceState({}, "", window.location.pathname)
+          }
         }
       }
     }, 0)
@@ -86,6 +103,7 @@ export function NotesView({ initialNotes }: NotesViewProps) {
     return () => {
       clearTimeout(timer)
       window.removeEventListener("myos:create-note", handleCreateEvent)
+      window.removeEventListener("myos:select-note", handleSelectNoteEvent)
     }
   }, [handleCreateNote])
 

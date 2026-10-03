@@ -75,7 +75,7 @@ export function TasksView({
 
   const searchInputRef = React.useRef<HTMLInputElement | null>(null)
 
-  // Global Keyboard Shortcuts
+  // Global Keyboard Shortcuts & Event Listeners
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't intercept if typing in an input, textarea, or contentEditable element
@@ -106,8 +106,20 @@ export function TasksView({
       setIsCreateOpen(true)
     }
 
+    const handleSelectTaskEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ taskId: string }>
+      const taskId = customEvent.detail?.taskId
+      if (taskId) {
+        const found = tasks.find((t) => t.id === taskId)
+        if (found) {
+          setEditingTask(found)
+        }
+      }
+    }
+
     window.addEventListener("keydown", handleKeyDown)
     window.addEventListener("myos:create-task", handleCreateEvent)
+    window.addEventListener("myos:select-task", handleSelectTaskEvent)
 
     // Handle deep-link or command palette query parameter
     const timer = setTimeout(() => {
@@ -117,6 +129,15 @@ export function TasksView({
           setEditingTask(null)
           setIsCreateOpen(true)
           window.history.replaceState({}, "", window.location.pathname)
+        } else {
+          const taskId = params.get("taskId")
+          if (taskId) {
+            const found = tasks.find((t) => t.id === taskId)
+            if (found) {
+              setEditingTask(found)
+            }
+            window.history.replaceState({}, "", window.location.pathname)
+          }
         }
       }
     }, 0)
@@ -125,8 +146,9 @@ export function TasksView({
       clearTimeout(timer)
       window.removeEventListener("keydown", handleKeyDown)
       window.removeEventListener("myos:create-task", handleCreateEvent)
+      window.removeEventListener("myos:select-task", handleSelectTaskEvent)
     }
-  }, [])
+  }, [tasks])
 
   // Optimistic Toggle Complete / Reopen
   const handleToggleStatus = async (taskId: string, currentStatus: TaskStatus) => {

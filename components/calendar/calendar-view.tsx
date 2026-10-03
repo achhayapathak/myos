@@ -72,6 +72,51 @@ export function CalendarView({
     return events.map((ev) => toFullCalendarEvent(ev, safeTz))
   }, [events, safeTz])
 
+  // Command palette and deep link listener for event selection
+  React.useEffect(() => {
+    const handleSelectEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ eventId: string }>
+      const eventId = customEvent.detail?.eventId
+      if (eventId) {
+        const found = events.find((ev) => ev.id === eventId)
+        if (found) {
+          setSelectedEvent(found)
+          setPrefilledDate(null)
+          setPrefilledTime(null)
+          setPrefilledAllDay(false)
+          setDialogOpen(true)
+          calendarRef.current?.getApi()?.gotoDate(found.start_at)
+        }
+      }
+    }
+
+    window.addEventListener("myos:select-event", handleSelectEvent)
+
+    const timer = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search)
+        const eventId = params.get("eventId")
+        if (eventId) {
+          const found = events.find((ev) => ev.id === eventId)
+          if (found) {
+            setSelectedEvent(found)
+            setPrefilledDate(null)
+            setPrefilledTime(null)
+            setPrefilledAllDay(false)
+            setDialogOpen(true)
+            calendarRef.current?.getApi()?.gotoDate(found.start_at)
+            window.history.replaceState({}, "", window.location.pathname)
+          }
+        }
+      }
+    }, 0)
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener("myos:select-event", handleSelectEvent)
+    }
+  }, [events])
+
   // Calendar Navigation Handlers
   const handlePrev = () => {
     const api = calendarRef.current?.getApi()

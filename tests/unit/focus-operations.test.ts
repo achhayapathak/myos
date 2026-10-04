@@ -168,6 +168,55 @@ describe("Focus / Pomodoro Server Actions & Security Tests", () => {
       )
     })
 
+    it("starts a 50-minute long focus session with duration_seconds 3000", async () => {
+      const { startPomodoroSession } = await import("@/app/(app)/focus/actions")
+
+      const res = await startPomodoroSession({
+        type: "focus",
+        duration_seconds: 3000,
+      })
+
+      expect(res.success).toBe(true)
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "focus",
+          duration_seconds: 3000,
+        })
+      )
+    })
+
+    it("normalizes long_focus type to focus type with 3000 seconds duration", async () => {
+      const { startPomodoroSession } = await import("@/app/(app)/focus/actions")
+
+      const res = await startPomodoroSession({
+        type: "long_focus" as unknown as "focus",
+      })
+
+      expect(res.success).toBe(true)
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "focus",
+          duration_seconds: 3000,
+        })
+      )
+    })
+
+    it("normalizes short_focus type to focus type with 1500 seconds duration", async () => {
+      const { startPomodoroSession } = await import("@/app/(app)/focus/actions")
+
+      const res = await startPomodoroSession({
+        type: "short_focus" as unknown as "focus",
+      })
+
+      expect(res.success).toBe(true)
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "focus",
+          duration_seconds: 1500,
+        })
+      )
+    })
+
     it("blocks unauthenticated users from starting sessions", async () => {
       mockGetUser.mockResolvedValueOnce({
         data: { user: null },

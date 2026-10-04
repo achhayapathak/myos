@@ -15,10 +15,12 @@ import { Button } from "@/components/ui/button"
 import type { PomodoroType, PomodoroSession } from "@/types/database"
 import type { FocusPageData, ActivePomodoroSession } from "@/lib/focus/data"
 import {
-  DEFAULT_DURATIONS,
+  POMODORO_MODES,
+  derivePomodoroMode,
   calculateRemainingSeconds,
   isSessionCompleted,
   type PomodoroState,
+  type PomodoroMode,
 } from "@/lib/focus/timer-utils"
 import {
   startPomodoroSession,
@@ -75,9 +77,20 @@ export function FocusView({ initialData }: FocusViewProps) {
     initialData.completedSessionsToday
   )
 
-  const [selectedType, setSelectedType] = React.useState<PomodoroType>(
-    initialData.activeSession?.type || "focus"
-  )
+  const [selectedMode, setSelectedMode] = React.useState<PomodoroMode>(() => {
+    if (initialData.activeSession) {
+      return derivePomodoroMode(
+        initialData.activeSession.type,
+        initialData.activeSession.duration_seconds
+      )
+    }
+    return "short_focus"
+  })
+
+  const selectedType: PomodoroType = activeSession
+    ? activeSession.type
+    : POMODORO_MODES[selectedMode].type
+
   const [selectedTaskId, setSelectedTaskId] = React.useState<string | null>(
     initialData.activeSession?.task_id || null
   )
@@ -137,7 +150,7 @@ export function FocusView({ initialData }: FocusViewProps) {
     if (!activeSession) {
       return {
         state: "IDLE" as PomodoroState,
-        remainingSeconds: DEFAULT_DURATIONS[selectedType],
+        remainingSeconds: POMODORO_MODES[selectedMode].durationSeconds,
         isDone: false,
       }
     }
@@ -167,7 +180,7 @@ export function FocusView({ initialData }: FocusViewProps) {
       remainingSeconds: remaining,
       isDone: completed,
     }
-  }, [activeSession, currentTime, selectedType])
+  }, [activeSession, currentTime, selectedMode])
 
   // Track if completion was already persisted to avoid duplicate network calls
   const completionHandledRef = React.useRef<string | null>(null)
@@ -194,17 +207,28 @@ export function FocusView({ initialData }: FocusViewProps) {
 
   // Start Session
   const handleStartSession = React.useCallback(
-    (typeToStart: PomodoroType = selectedType) => {
+    (target: PomodoroMode | PomodoroType = selectedMode) => {
       setErrorMessage(null)
-      const duration = DEFAULT_DURATIONS[typeToStart]
-      setSelectedType(typeToStart)
+      let modeToStart: PomodoroMode
+      if (target === "focus") {
+        modeToStart = selectedMode === "long_focus" ? "long_focus" : "short_focus"
+      } else if (target === "short_break") {
+        modeToStart = "short_break"
+      } else if (target === "long_break") {
+        modeToStart = "long_break"
+      } else {
+        modeToStart = target
+      }
+
+      const config = POMODORO_MODES[modeToStart]
+      setSelectedMode(modeToStart)
 
       startTransition(async () => {
         try {
           const res = await startPomodoroSession({
-            type: typeToStart,
-            duration_seconds: duration,
-            task_id: typeToStart === "focus" ? selectedTaskId : null,
+            type: config.type,
+            duration_seconds: config.durationSeconds,
+            task_id: config.type === "focus" ? selectedTaskId : null,
           })
 
           if (!res.success || !res.data) {
@@ -212,7 +236,8 @@ export function FocusView({ initialData }: FocusViewProps) {
             return
           }
 
-          const taskTitle = initialData.availableTasks.find((t) => t.id === selectedTaskId)?.title || null
+          const taskTitle =
+            initialData.availableTasks.find((t) => t.id === selectedTaskId)?.title || null
           const sessionWithTask: ActivePomodoroSession = {
             ...res.data,
             task_title: taskTitle,
@@ -225,7 +250,7 @@ export function FocusView({ initialData }: FocusViewProps) {
         }
       })
     },
-    [initialData.availableTasks, selectedTaskId, selectedType]
+    [initialData.availableTasks, selectedTaskId, selectedMode]
   )
 
   // Command palette and deep link listener for starting focus
@@ -299,7 +324,7 @@ export function FocusView({ initialData }: FocusViewProps) {
 
   const currentDuration = activeSession
     ? activeSession.duration_seconds
-    : DEFAULT_DURATIONS[selectedType]
+    : POMODORO_MODES[selectedMode].durationSeconds
 
   return (
     <div className="flex flex-col items-center justify-center gap-6 max-w-2xl mx-auto py-4 pb-16 w-full">
@@ -340,63 +365,36 @@ export function FocusView({ initialData }: FocusViewProps) {
       )}
 
       {/* Mode Selector Tabs (only clickable in IDLE or when complete) */}
-      <div className="grid grid-cols-3 gap-1 p-1 rounded-xl border border-border/60 bg-muted/30 text-xs font-mono w-full max-w-md">
-        <button
-          type="button"
-          disabled={state === "FOCUSING" || state === "SHORT_BREAK"}
-          onClick={() => {
-            setSelectedType("focus")
-            setActiveSession(null)
-          }}
-          className={cn(
-            "py-2 px-1 rounded-lg transition-all cursor-pointer font-medium select-none text-center touch-manipulation min-h-[36px]",
-            selectedType === "focus"
-              ? "bg-foreground text-background font-semibold shadow-xs"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-            (state === "FOCUSING" || state === "SHORT_BREAK") && "opacity-60 cursor-not-allowed"
-          )}
-        >
-          <span>Focus</span>
-          <span className="text-[10px] opacity-75 ml-1">25m</span>
-        </button>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 rounded-xl border border-border/60 bg-muted/30 text-xs font-mono w-full max-w-lg">
+        {((["short_focus", "long_focus", "short_break", "long_break"] as const)).map((modeKey) => {
+          const config = POMODORO_MODES[modeKey]
+          const isSelected = selectedMode === modeKey && !activeSession
+          const isCurrentRunning =
+            activeSession &&
+            derivePomodoroMode(activeSession.type, activeSession.duration_seconds) === modeKey
 
-        <button
-          type="button"
-          disabled={state === "FOCUSING" || state === "SHORT_BREAK"}
-          onClick={() => {
-            setSelectedType("short_break")
-            setActiveSession(null)
-          }}
-          className={cn(
-            "py-2 px-1 rounded-lg transition-all cursor-pointer font-medium select-none text-center touch-manipulation min-h-[36px]",
-            selectedType === "short_break"
-              ? "bg-foreground text-background font-semibold shadow-xs"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-            (state === "FOCUSING" || state === "SHORT_BREAK") && "opacity-60 cursor-not-allowed"
-          )}
-        >
-          <span>Short</span>
-          <span className="text-[10px] opacity-75 ml-1">5m</span>
-        </button>
-
-        <button
-          type="button"
-          disabled={state === "FOCUSING" || state === "SHORT_BREAK"}
-          onClick={() => {
-            setSelectedType("long_break")
-            setActiveSession(null)
-          }}
-          className={cn(
-            "py-2 px-1 rounded-lg transition-all cursor-pointer font-medium select-none text-center touch-manipulation min-h-[36px]",
-            selectedType === "long_break"
-              ? "bg-foreground text-background font-semibold shadow-xs"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-            (state === "FOCUSING" || state === "SHORT_BREAK") && "opacity-60 cursor-not-allowed"
-          )}
-        >
-          <span>Long</span>
-          <span className="text-[10px] opacity-75 ml-1">15m</span>
-        </button>
+          return (
+            <button
+              key={modeKey}
+              type="button"
+              disabled={state === "FOCUSING" || state === "SHORT_BREAK"}
+              onClick={() => {
+                setSelectedMode(modeKey)
+                setActiveSession(null)
+              }}
+              className={cn(
+                "py-2 px-1.5 rounded-lg transition-all cursor-pointer font-medium select-none text-center touch-manipulation min-h-[38px] flex items-center justify-center gap-1",
+                isSelected || isCurrentRunning
+                  ? "bg-foreground text-background font-semibold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                (state === "FOCUSING" || state === "SHORT_BREAK") && "opacity-60 cursor-not-allowed"
+              )}
+            >
+              <span>{config.label}</span>
+              <span className="text-[10px] opacity-75">{config.durationMinutes}m</span>
+            </button>
+          )
+        })}
       </div>
 
       {/* Main Timer Card */}
@@ -440,11 +438,11 @@ export function FocusView({ initialData }: FocusViewProps) {
             <Button
               size="lg"
               disabled={isActionPending}
-              onClick={() => handleStartSession(selectedType)}
+              onClick={() => handleStartSession(selectedMode)}
               className="gap-2 font-mono text-xs px-8 cursor-pointer shadow-xs"
             >
               <Play className="size-4 fill-current" />
-              <span>Start {selectedType === "focus" ? "Focus" : "Break"}</span>
+              <span>Start {POMODORO_MODES[selectedMode].label}</span>
             </Button>
           )}
 
@@ -462,7 +460,7 @@ export function FocusView({ initialData }: FocusViewProps) {
           )}
 
           {state === "FOCUS_COMPLETE" && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <Button
                 size="lg"
                 disabled={isActionPending}
@@ -470,7 +468,7 @@ export function FocusView({ initialData }: FocusViewProps) {
                 className="gap-2 font-mono text-xs cursor-pointer shadow-xs"
               >
                 <Coffee className="size-4" />
-                <span>Start 5m Break</span>
+                <span>Short Break (5m)</span>
               </Button>
               <Button
                 variant="outline"
@@ -479,7 +477,7 @@ export function FocusView({ initialData }: FocusViewProps) {
                 onClick={() => handleStartSession("long_break")}
                 className="gap-2 font-mono text-xs cursor-pointer"
               >
-                <span>15m Break</span>
+                <span>Long Break (15m)</span>
               </Button>
               <Button
                 variant="ghost"
@@ -493,18 +491,27 @@ export function FocusView({ initialData }: FocusViewProps) {
           )}
 
           {state === "BREAK_COMPLETE" && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <Button
                 size="lg"
                 disabled={isActionPending}
-                onClick={() => handleStartSession("focus")}
+                onClick={() => handleStartSession("short_focus")}
                 className="gap-2 font-mono text-xs cursor-pointer shadow-xs"
               >
                 <Play className="size-4 fill-current" />
-                <span>Start Next Focus Block</span>
+                <span>Short Focus (25m)</span>
               </Button>
               <Button
                 variant="outline"
+                size="lg"
+                disabled={isActionPending}
+                onClick={() => handleStartSession("long_focus")}
+                className="gap-2 font-mono text-xs cursor-pointer"
+              >
+                <span>Long Focus (50m)</span>
+              </Button>
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => setActiveSession(null)}
                 className="font-mono text-xs cursor-pointer"

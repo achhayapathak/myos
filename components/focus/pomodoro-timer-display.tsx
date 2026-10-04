@@ -41,6 +41,7 @@ export function PomodoroTimerDisplay({
   const isBreak = type === "short_break" || type === "long_break"
   const isComplete = state === "FOCUS_COMPLETE" || state === "BREAK_COMPLETE"
   const isActive = state === "FOCUSING" || state === "SHORT_BREAK"
+  const isLongFocus = type === "focus" && durationSeconds >= 45 * 60
 
   return (
     <div className="relative flex flex-col items-center justify-center py-6 select-none">
@@ -95,11 +96,13 @@ export function PomodoroTimerDisplay({
                 ? "Focus Complete"
                 : state === "BREAK_COMPLETE"
                 ? "Break Complete"
-                : type === "focus"
-                ? "Focus Block"
-                : type === "short_break"
-                ? "Short Break"
-                : "Long Break"}
+                : isBreak
+                ? type === "short_break"
+                  ? "Short Break"
+                  : "Long Break"
+                : isLongFocus
+                ? "Long Focus"
+                : "Short Focus"}
             </span>
           </div>
 
@@ -120,7 +123,13 @@ export function PomodoroTimerDisplay({
           {/* Helper Subtext */}
           <p className="text-[11px] font-mono text-muted-foreground mt-2 max-w-[200px] truncate">
             {state === "IDLE"
-              ? "Ready for deep work"
+              ? isBreak
+                ? type === "short_break"
+                  ? "5m quick recharge"
+                  : "15m recovery break"
+                : isLongFocus
+                ? "50m deep focus session"
+                : "25m deep focus session"
               : state === "FOCUSING"
               ? taskTitle ? `Task: ${taskTitle}` : "Focusing without distraction"
               : state === "SHORT_BREAK"

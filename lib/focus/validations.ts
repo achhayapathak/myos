@@ -12,7 +12,9 @@ export const pomodoroTypeSchema = z.enum([
 ]) satisfies z.ZodType<PomodoroType>
 
 export const startSessionSchema = z.object({
-  type: pomodoroTypeSchema.default("focus"),
+  type: z
+    .enum(["focus", "short_break", "long_break", "short_focus", "long_focus"])
+    .default("focus"),
   duration_seconds: z
     .number()
     .int("Duration must be an integer.")
@@ -25,10 +27,30 @@ export const startSessionSchema = z.object({
     .nullable()
     .optional()
     .transform((val) => (val && val.trim() !== "" ? val : null)),
-}).transform((data) => ({
-  ...data,
-  duration_seconds: data.duration_seconds || DEFAULT_DURATIONS[data.type],
-}))
+}).transform((data) => {
+  let normalizedType: PomodoroType = "focus"
+  let defaultDuration = DEFAULT_DURATIONS.focus
+
+  if (data.type === "long_focus") {
+    normalizedType = "focus"
+    defaultDuration = 50 * 60
+  } else if (data.type === "short_focus") {
+    normalizedType = "focus"
+    defaultDuration = 25 * 60
+  } else if (data.type === "short_break") {
+    normalizedType = "short_break"
+    defaultDuration = DEFAULT_DURATIONS.short_break
+  } else if (data.type === "long_break") {
+    normalizedType = "long_break"
+    defaultDuration = DEFAULT_DURATIONS.long_break
+  }
+
+  return {
+    type: normalizedType,
+    duration_seconds: data.duration_seconds || defaultDuration,
+    task_id: data.task_id,
+  }
+})
 
 export const completeSessionSchema = z.object({
   id: z.string().regex(uuidPattern, "Invalid session ID format."),

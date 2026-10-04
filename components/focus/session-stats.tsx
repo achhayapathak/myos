@@ -3,6 +3,7 @@
 import * as React from "react"
 import { CheckCircle, Clock, Flame, History } from "lucide-react"
 import type { PomodoroSession } from "@/types/database"
+import { formatSessionLabel } from "@/lib/focus/timer-utils"
 
 interface SessionStatsProps {
   completedSessions: (PomodoroSession & { task_title?: string | null })[]
@@ -82,7 +83,7 @@ export function SessionStats({
                       }`}
                     />
                     <span className="font-medium text-foreground truncate">
-                      {isFocus ? "Focus (25m)" : s.type === "short_break" ? "Short Break (5m)" : "Long Break (15m)"}
+                      {formatSessionLabel(s.type, s.duration_seconds)}
                     </span>
                     {s.task_title && (
                       <span className="text-[10px] text-muted-foreground truncate">

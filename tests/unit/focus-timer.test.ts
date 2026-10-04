@@ -7,6 +7,10 @@ import {
   formatTimerDisplay,
   derivePomodoroState,
   DEFAULT_DURATIONS,
+  POMODORO_MODES,
+  MODE_DURATIONS,
+  derivePomodoroMode,
+  formatSessionLabel,
 } from "@/lib/focus/timer-utils"
 
 describe("Focus Timer Calculations (Timestamp Source of Truth)", () => {
@@ -211,6 +215,61 @@ describe("Focus Timer Calculations (Timestamp Source of Truth)", () => {
       expect(res.state).toBe("BREAK_COMPLETE")
       expect(res.remainingSeconds).toBe(0)
       expect(res.isCompleted).toBe(true)
+    })
+  })
+
+  describe("7. 50-minute Long Focus & Mode Naming", () => {
+    const longFocusDuration = 50 * 60 // 3000 seconds
+
+    it("accurately computes 50m session countdown", () => {
+      // At start
+      expect(calculateRemainingSeconds(baseStart, longFocusDuration, baseStartMs)).toBe(3000)
+
+      // 20 minutes in
+      const twentyMinLater = baseStartMs + 20 * 60 * 1000
+      expect(calculateRemainingSeconds(baseStart, longFocusDuration, twentyMinLater)).toBe(1800)
+
+      // At end
+      const endMs = baseStartMs + 50 * 60 * 1000
+      expect(calculateRemainingSeconds(baseStart, longFocusDuration, endMs)).toBe(0)
+      expect(isSessionCompleted(baseStart, longFocusDuration, endMs)).toBe(true)
+    })
+
+    it("derives PomodoroMode distinctly for 25m and 50m focus and breaks", () => {
+      expect(derivePomodoroMode("focus", 25 * 60)).toBe("short_focus")
+      expect(derivePomodoroMode("focus", 50 * 60)).toBe("long_focus")
+      expect(derivePomodoroMode("short_break", 5 * 60)).toBe("short_break")
+      expect(derivePomodoroMode("long_break", 15 * 60)).toBe("long_break")
+    })
+
+    it("formats distinct labels for short and long focus and break sessions", () => {
+      expect(formatSessionLabel("focus", 25 * 60)).toBe("Short Focus (25m)")
+      expect(formatSessionLabel("focus", 50 * 60)).toBe("Long Focus (50m)")
+      expect(formatSessionLabel("short_break", 5 * 60)).toBe("Short Break (5m)")
+      expect(formatSessionLabel("long_break", 15 * 60)).toBe("Long Break (15m)")
+    })
+
+    it("configures all 4 modes in POMODORO_MODES metadata", () => {
+      expect(POMODORO_MODES.short_focus.durationMinutes).toBe(25)
+      expect(POMODORO_MODES.short_focus.durationSeconds).toBe(1500)
+      expect(POMODORO_MODES.short_focus.label).toBe("Short Focus")
+
+      expect(POMODORO_MODES.long_focus.durationMinutes).toBe(50)
+      expect(POMODORO_MODES.long_focus.durationSeconds).toBe(3000)
+      expect(POMODORO_MODES.long_focus.label).toBe("Long Focus")
+
+      expect(POMODORO_MODES.short_break.durationMinutes).toBe(5)
+      expect(POMODORO_MODES.short_break.durationSeconds).toBe(300)
+      expect(POMODORO_MODES.short_break.label).toBe("Short Break")
+
+      expect(POMODORO_MODES.long_break.durationMinutes).toBe(15)
+      expect(POMODORO_MODES.long_break.durationSeconds).toBe(900)
+      expect(POMODORO_MODES.long_break.label).toBe("Long Break")
+
+      expect(MODE_DURATIONS.short_focus).toBe(1500)
+      expect(MODE_DURATIONS.long_focus).toBe(3000)
+      expect(MODE_DURATIONS.short_break).toBe(300)
+      expect(MODE_DURATIONS.long_break).toBe(900)
     })
   })
 })

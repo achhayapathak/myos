@@ -44,8 +44,12 @@ export function FocusStatusCard({ summary }: FocusStatusCardProps) {
             </div>
             <p className="text-xs font-medium text-foreground mt-1.5">
               {activeSession.type === "focus"
-                ? "Active Deep Work Session"
-                : "Active Break"}
+                ? activeSession.duration_seconds >= 45 * 60
+                  ? "Active Long Focus (50m)"
+                  : "Active Short Focus (25m)"
+                : activeSession.type === "short_break"
+                ? "Active Short Break (5m)"
+                : "Active Long Break (15m)"}
             </p>
             {activeSession.task_title && (
               <p className="text-[11px] font-mono text-muted-foreground mt-0.5 truncate max-w-[220px]">
@@ -59,7 +63,7 @@ export function FocusStatusCard({ summary }: FocusStatusCardProps) {
               25:00
             </div>
             <p className="text-[11px] font-mono text-muted-foreground mt-1">
-              Standard 25m Focus Block
+              Short Focus (25m) or Long Focus (50m)
             </p>
           </div>
         )}

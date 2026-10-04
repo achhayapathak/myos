@@ -225,7 +225,7 @@ export function RemindersView({
       </div>
 
       {/* Web Push Architecture Info Banner */}
-      <div className="p-3.5 rounded-xl border border-border/60 bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+      {/* <div className="p-3.5 rounded-xl border border-border/60 bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
         <div className="flex items-center gap-3">
           <div className="size-8 rounded-lg bg-foreground/5 flex items-center justify-center text-foreground shrink-0">
             <Smartphone className="size-4" />
@@ -246,7 +246,7 @@ export function RemindersView({
         <Badge variant="secondary" className="font-mono text-[10px] w-fit shrink-0">
           Independent Core
         </Badge>
-      </div>
+      </div> */}
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

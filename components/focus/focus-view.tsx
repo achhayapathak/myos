@@ -309,13 +309,13 @@ export function FocusView({ initialData }: FocusViewProps) {
           {state === "FOCUSING" || state === "SHORT_BREAK" ? (
             <Radio className="size-3 text-emerald-500 animate-pulse" />
           ) : (
-            <Timer className="size-3.5 text-amber-500" />
+            <Timer className="size-5 text-amber-500" />
           )}
-          <span>Timestamp-Backed Pomodoro Engine</span>
-        </div>
+          {/* <span>Timestamp-Backed Pomodoro Engine</span> */}
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
           Focus Mode
         </h1>
+        </div>
         <p className="text-xs text-muted-foreground font-mono mt-1">
           Deep work cycles with drift-free background and sleep resilience
         </p>

@@ -137,11 +137,16 @@ describe("Today Dashboard Unit Tests", () => {
       expect(noonRes.meridiem).toBe("PM")
     })
 
-    it("verifies Today page renders TodayReminders instead of HighPriorityTasks", () => {
+    it("verifies Today page renders TodayReminders instead of HighPriorityTasks under habits", () => {
       const pagePath = path.join(rootDir, "app/(app)/today/page.tsx")
       const content = fs.readFileSync(pagePath, "utf-8")
       expect(content).toContain("TodayReminders")
       expect(content).not.toContain("<HighPriorityTasks")
+      const habitsIndex = content.indexOf("<TodayHabits")
+      const remindersIndex = content.indexOf("<TodayReminders")
+      expect(habitsIndex).toBeGreaterThan(-1)
+      expect(remindersIndex).toBeGreaterThan(-1)
+      expect(habitsIndex).toBeLessThan(remindersIndex)
     })
 
     it("renders greeting with 'master' by default instead of name from email", async () => {

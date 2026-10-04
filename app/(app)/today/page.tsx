@@ -73,21 +73,21 @@ export default async function TodayPage() {
             totalCount={habitsSummary?.totalCount || 0}
             timeZone={bounds.timeZone}
           />
-        </div>
-
-        {/* Companion Right Column: Quick Note, Focus Status, Reminders & Upcoming Schedule */}
-        <div className="lg:col-span-5 flex flex-col gap-5">
-          {/* Quick Note / Scratchpad Creation */}
-          <QuickNoteForm />
-
-          {/* Pomodoro & Focus Status */}
-          <FocusStatusCard summary={focusSummary} />
 
           {/* Reminders Section */}
           <TodayReminders
             initialReminders={reminders}
             timeZone={bounds.timeZone}
           />
+        </div>
+
+        {/* Companion Right Column: Quick Note, Focus Status & Upcoming Schedule */}
+        <div className="lg:col-span-5 flex flex-col gap-5">
+          {/* Quick Note / Scratchpad Creation */}
+          <QuickNoteForm />
+
+          {/* Pomodoro & Focus Status */}
+          <FocusStatusCard summary={focusSummary} />
 
           {/* Upcoming Calendar Events */}
           <UpcomingEvents

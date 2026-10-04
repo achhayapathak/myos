@@ -285,6 +285,71 @@ export type NotificationDeliveryUpdate = {
   updated_at?: string
 }
 
+export type HabitFrequency = "daily" | "weekly"
+
+export type Habit = {
+  id: string
+  user_id: string
+  name: string
+  description: string | null
+  frequency_type: HabitFrequency
+  target_days: number[] | null
+  color: string | null
+  archived: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type HabitInsert = {
+  id?: string
+  user_id?: string
+  name: string
+  description?: string | null
+  frequency_type: HabitFrequency
+  target_days?: number[] | null
+  color?: string | null
+  archived?: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export type HabitUpdate = {
+  id?: string
+  user_id?: string
+  name?: string
+  description?: string | null
+  frequency_type?: HabitFrequency
+  target_days?: number[] | null
+  color?: string | null
+  archived?: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export type HabitCompletion = {
+  id: string
+  habit_id: string
+  user_id: string
+  completed_on: string
+  created_at: string
+}
+
+export type HabitCompletionInsert = {
+  id?: string
+  habit_id: string
+  user_id?: string
+  completed_on: string
+  created_at?: string
+}
+
+export type HabitCompletionUpdate = {
+  id?: string
+  habit_id?: string
+  user_id?: string
+  completed_on?: string
+  created_at?: string
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -336,6 +401,18 @@ export type Database = {
         Update: NotificationDeliveryUpdate
         Relationships: []
       }
+      habits: {
+        Row: Habit
+        Insert: HabitInsert
+        Update: HabitUpdate
+        Relationships: []
+      }
+      habit_completions: {
+        Row: HabitCompletion
+        Insert: HabitCompletionInsert
+        Update: HabitCompletionUpdate
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -352,6 +429,8 @@ export type Database = {
       task_status: TaskStatus
       task_priority: TaskPriority
       pomodoro_type: PomodoroType
+      habit_frequency: HabitFrequency
     }
   }
 }
+

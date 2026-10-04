@@ -2,6 +2,8 @@ import "server-only"
 import { createClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/supabase/auth"
 import type { Task, Event, PomodoroSession, Reminder } from "@/types/database"
+import type { TodayHabitsData } from "@/lib/habits/types"
+import { getTodayHabitsData } from "@/lib/habits/queries"
 import {
   getTodayDateBounds,
   type TodayDateBounds,
@@ -29,6 +31,7 @@ export interface TodayDashboardData {
   completedTasksTodayCount: number
   upcomingEvents: Event[]
   focusSummary: FocusSummary
+  habitsSummary: TodayHabitsData | null
 }
 
 /**
@@ -61,6 +64,7 @@ export async function getTodayDashboardData(): Promise<TodayDashboardData | null
     completedTodayResult,
     eventsResult,
     sessionsResult,
+    habitsSummary,
   ] = await Promise.all([
     // A. Tasks due on or before today that are incomplete
     supabase
@@ -104,6 +108,9 @@ export async function getTodayDashboardData(): Promise<TodayDashboardData | null
       .eq("user_id", user.id)
       .or(`ended_at.is.null,started_at.gte.${bounds.startISO}`)
       .order("started_at", { ascending: false }),
+
+    // F. Habits summary for today
+    getTodayHabitsData(),
   ])
 
   // Process tasks due today
@@ -173,5 +180,6 @@ export async function getTodayDashboardData(): Promise<TodayDashboardData | null
     completedTasksTodayCount,
     upcomingEvents,
     focusSummary,
+    habitsSummary,
   }
 }

@@ -10,6 +10,7 @@ import {
   Timer,
   FileText,
   Calendar,
+  CheckCircle2,
   Bell,
   Settings,
   MoreHorizontal,
@@ -37,6 +38,7 @@ const PRIMARY_MOBILE_ITEMS = [
 
 const SECONDARY_MOBILE_ITEMS = [
   { title: "Calendar", href: "/calendar", icon: Calendar, desc: "Schedule & event timeline" },
+  { title: "Habits", href: "/habits", icon: CheckCircle2, desc: "Habits, streaks & consistency" },
   { title: "Reminders", href: "/reminders", icon: Bell, desc: "Time-based alerts" },
   { title: "Settings", href: "/settings", icon: Settings, desc: "Preferences & system controls" },
 ]

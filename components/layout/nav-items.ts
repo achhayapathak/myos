@@ -4,6 +4,7 @@ import {
   FileText,
   Timer,
   Calendar,
+  CheckCircle2,
   Bell,
   Settings,
   type LucideIcon,
@@ -60,10 +61,18 @@ export const NAV_ITEMS: NavItem[] = [
     description: "Calendar views and events",
   },
   {
+    title: "Habits",
+    href: "/habits",
+    icon: CheckCircle2,
+    shortcut: "6",
+    mobilePriority: false,
+    description: "Daily habits, streaks & consistency",
+  },
+  {
     title: "Reminders",
     href: "/reminders",
     icon: Bell,
-    shortcut: "6",
+    shortcut: "7",
     mobilePriority: false,
     description: "Time-based notifications",
   },
@@ -71,8 +80,9 @@ export const NAV_ITEMS: NavItem[] = [
     title: "Settings",
     href: "/settings",
     icon: Settings,
-    shortcut: "7",
+    shortcut: "8",
     mobilePriority: false,
     description: "Preferences & system settings",
   },
 ]
+

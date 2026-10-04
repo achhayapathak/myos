@@ -11,6 +11,7 @@ import {
   FileText,
   Timer,
   Calendar as CalendarIcon,
+  CheckCircle2,
   Bell,
   Settings as SettingsIcon,
   Plus,
@@ -199,6 +200,16 @@ export function CommandPalette({
     })
   }, [pathname, router, runCommand])
 
+  const handleCreateHabit = React.useCallback(() => {
+    runCommand(() => {
+      if (pathname === "/habits") {
+        window.dispatchEvent(new CustomEvent("myos:create-habit"))
+      } else {
+        router.push("/habits?new=true")
+      }
+    })
+  }, [pathname, router, runCommand])
+
   // Direct item selection handlers
   const handleSelectTask = React.useCallback(
     (task: SearchTaskResult) => {
@@ -259,12 +270,14 @@ export function CommandPalette({
   const showCreateTask = match("Create Task new task add todo new item action create")
   const showCreateNote = match("Create Note new note memo write scratchpad markdown create")
   const showStartFocus = match("Start Focus start pomodoro timer 25m work interval session begin")
+  const showCreateHabit = match("Create Habit new habit add habit streak daily action create")
 
   const showGoToday = match("Go to Today today dashboard home agenda overview daily")
   const showGoTasks = match("Go to Tasks tasks todo list backlog items actions")
   const showGoNotes = match("Go to Notes notes memo markdown scratchpad write docs")
   const showGoFocus = match("Go to Focus focus pomodoro timer clock work session")
   const showGoCalendar = match("Go to Calendar calendar schedule events timeline month week day")
+  const showGoHabits = match("Go to Habits habits habit tracker streak daily consistency")
   const showGoReminders = match("Go to Reminders reminders alerts notifications scheduled")
   const showGoSettings = match("Go to Settings system preferences configuration account")
 
@@ -276,13 +289,14 @@ export function CommandPalette({
   const hasNotes = searchResults.notes.length > 0
   const hasEvents = searchResults.events.length > 0
 
-  const hasActions = showCreateTask || showCreateNote || showStartFocus
+  const hasActions = showCreateTask || showCreateNote || showStartFocus || showCreateHabit
   const hasNav =
     showGoToday ||
     showGoTasks ||
     showGoNotes ||
     showGoFocus ||
     showGoCalendar ||
+    showGoHabits ||
     showGoReminders ||
     showGoSettings
   const hasAppearance = showThemeLight || showThemeDark || showThemeSystem
@@ -476,6 +490,17 @@ export function CommandPalette({
                 <CommandShortcut>⌘P</CommandShortcut>
               </CommandItem>
             )}
+
+            {showCreateHabit && (
+              <CommandItem
+                value="Create Habit new habit add habit streak daily action create"
+                onSelect={handleCreateHabit}
+              >
+                <CheckCircle2 className="mr-2 size-4 text-emerald-500" />
+                <span className="font-medium">Create Habit</span>
+                <CommandShortcut>⌘H</CommandShortcut>
+              </CommandItem>
+            )}
           </CommandGroup>
         )}
 
@@ -536,6 +561,17 @@ export function CommandPalette({
                 <CalendarIcon className="mr-2 size-4 text-purple-500" />
                 <span>Go to Calendar</span>
                 <CommandShortcut>G C</CommandShortcut>
+              </CommandItem>
+            )}
+
+            {showGoHabits && (
+              <CommandItem
+                value="Go to Habits habits habit tracker streak daily consistency"
+                onSelect={() => runCommand(() => router.push("/habits"))}
+              >
+                <CheckCircle2 className="mr-2 size-4 text-emerald-500" />
+                <span>Go to Habits</span>
+                <CommandShortcut>⌥6</CommandShortcut>
               </CommandItem>
             )}
 

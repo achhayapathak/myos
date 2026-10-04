@@ -3,6 +3,7 @@ import { getTodayDashboardData } from "@/lib/today-data"
 import {
   TodayHeader,
   TasksDueToday,
+  TodayHabits,
   TodayReminders,
   UpcomingEvents,
   FocusStatusCard,
@@ -30,6 +31,7 @@ export default async function TodayPage() {
     completedTasksTodayCount,
     upcomingEvents,
     focusSummary,
+    habitsSummary,
   } = data
 
   const pendingDueCount = tasksDueToday.filter((t) => t.status !== "completed").length
@@ -51,7 +53,7 @@ export default async function TodayPage() {
 
       {/* 2. Responsive Dashboard Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Primary Left Column: Quick Capture & Tasks */}
+        {/* Primary Left Column: Quick Capture, Tasks & Habits */}
         <div className="lg:col-span-7 flex flex-col gap-5">
           {/* Quick Task Creation */}
           <QuickTaskForm />
@@ -61,6 +63,15 @@ export default async function TodayPage() {
             tasks={tasksDueToday}
             startISO={bounds.startISO}
             endISO={bounds.endISO}
+            timeZone={bounds.timeZone}
+          />
+
+          {/* Habits Section on Today Dashboard */}
+          <TodayHabits
+            initialHabits={habitsSummary?.habits || []}
+            todayDate={bounds.dateStr}
+            completedCount={habitsSummary?.completedCount || 0}
+            totalCount={habitsSummary?.totalCount || 0}
             timeZone={bounds.timeZone}
           />
 

@@ -90,6 +90,21 @@ export function FocusView({ initialData }: FocusViewProps) {
     return "short_focus"
   })
 
+  // Preferred sub-modes when switching between Focus and Break tabs
+  const [preferredFocusMode, setPreferredFocusMode] = React.useState<"short_focus" | "long_focus">(() => {
+    if (initialData.activeSession && initialData.activeSession.type === "focus") {
+      return initialData.activeSession.duration_seconds >= 45 * 60 ? "long_focus" : "short_focus"
+    }
+    return "short_focus"
+  })
+
+  const [preferredBreakMode, setPreferredBreakMode] = React.useState<"short_break" | "long_break">(() => {
+    if (initialData.activeSession && initialData.activeSession.type === "long_break") {
+      return "long_break"
+    }
+    return "short_break"
+  })
+
   const selectedType: PomodoroType = activeSession
     ? activeSession.type
     : POMODORO_MODES[selectedMode].type
@@ -441,6 +456,44 @@ export function FocusView({ initialData }: FocusViewProps) {
     ? activeSession.duration_seconds
     : POMODORO_MODES[selectedMode].durationSeconds
 
+  const currentModeKey: PomodoroMode = activeSession
+    ? derivePomodoroMode(activeSession.type, activeSession.duration_seconds)
+    : selectedMode
+
+  const activeCategory: "focus" | "break" =
+    currentModeKey === "short_focus" || currentModeKey === "long_focus" ? "focus" : "break"
+
+  const isTabsDisabled = state === "FOCUSING" || state === "SHORT_BREAK" || state === "PAUSED"
+
+  const handleSelectCategory = React.useCallback(
+    (category: "focus" | "break") => {
+      if (isTabsDisabled) return
+      setErrorMessage(null)
+      setActiveSession(null)
+      if (category === "focus") {
+        setSelectedMode(preferredFocusMode)
+      } else {
+        setSelectedMode(preferredBreakMode)
+      }
+    },
+    [isTabsDisabled, preferredFocusMode, preferredBreakMode]
+  )
+
+  const handleSelectSubMode = React.useCallback(
+    (mode: PomodoroMode) => {
+      if (isTabsDisabled) return
+      setErrorMessage(null)
+      setActiveSession(null)
+      setSelectedMode(mode)
+      if (mode === "short_focus" || mode === "long_focus") {
+        setPreferredFocusMode(mode)
+      } else {
+        setPreferredBreakMode(mode)
+      }
+    },
+    [isTabsDisabled]
+  )
+
   return (
     <div className="flex flex-col items-center justify-center gap-6 max-w-2xl mx-auto py-4 pb-16 w-full">
       {/* Header */}
@@ -481,38 +534,143 @@ export function FocusView({ initialData }: FocusViewProps) {
         </div>
       )}
 
-      {/* Mode Selector Tabs (only clickable in IDLE or when complete) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 rounded-xl border border-border/60 bg-muted/30 text-xs font-mono w-full max-w-lg">
-        {((["short_focus", "long_focus", "short_break", "long_break"] as const)).map((modeKey) => {
-          const config = POMODORO_MODES[modeKey]
-          const isSelected = selectedMode === modeKey && !activeSession
-          const isCurrentRunning =
-            activeSession &&
-            derivePomodoroMode(activeSession.type, activeSession.duration_seconds) === modeKey
+      {/* Category Tabs: Focus vs Break with Short & Long Sub-Tabs */}
+      <div className="w-full max-w-lg flex flex-col items-center gap-2">
+        {/* Main Category Tabs: Only one can be selected at a time */}
+        <div
+          role="tablist"
+          aria-label="Pomodoro mode categories"
+          className="grid grid-cols-2 p-1 rounded-xl border border-border/70 bg-muted/40 text-xs font-mono w-full shadow-2xs"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeCategory === "focus"}
+            disabled={isTabsDisabled}
+            onClick={() => handleSelectCategory("focus")}
+            className={cn(
+              "py-2 px-3 rounded-lg transition-all font-medium select-none text-center flex items-center justify-center gap-2 cursor-pointer touch-manipulation min-h-[38px]",
+              activeCategory === "focus"
+                ? "bg-foreground text-background font-semibold shadow-xs"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+              isTabsDisabled && "opacity-60 cursor-not-allowed"
+            )}
+          >
+            <Timer className="size-3.5" />
+            <span>Focus</span>
+          </button>
 
-          return (
-            <button
-              key={modeKey}
-              type="button"
-              disabled={state === "FOCUSING" || state === "SHORT_BREAK" || state === "PAUSED"}
-              onClick={() => {
-                setSelectedMode(modeKey)
-                setActiveSession(null)
-              }}
-              className={cn(
-                "py-2 px-1.5 rounded-lg transition-all cursor-pointer font-medium select-none text-center touch-manipulation min-h-[38px] flex items-center justify-center gap-1",
-                isSelected || isCurrentRunning
-                  ? "bg-foreground text-background font-semibold shadow-xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                (state === "FOCUSING" || state === "SHORT_BREAK" || state === "PAUSED") &&
-                  "opacity-60 cursor-not-allowed"
-              )}
-            >
-              <span>{config.label}</span>
-              <span className="text-[10px] opacity-75">{config.durationMinutes}m</span>
-            </button>
-          )
-        })}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeCategory === "break"}
+            disabled={isTabsDisabled}
+            onClick={() => handleSelectCategory("break")}
+            className={cn(
+              "py-2 px-3 rounded-lg transition-all font-medium select-none text-center flex items-center justify-center gap-2 cursor-pointer touch-manipulation min-h-[38px]",
+              activeCategory === "break"
+                ? "bg-foreground text-background font-semibold shadow-xs"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+              isTabsDisabled && "opacity-60 cursor-not-allowed"
+            )}
+          >
+            <Coffee className="size-3.5" />
+            <span>Break</span>
+          </button>
+        </div>
+
+        {/* Sub-tabs: Short vs Long with respective durations */}
+        <div
+          role="tablist"
+          aria-label={`${activeCategory === "focus" ? "Focus" : "Break"} duration sub-tabs`}
+          className="grid grid-cols-2 p-1 rounded-lg border border-border/50 bg-muted/20 text-xs font-mono w-full max-w-sm shadow-2xs"
+        >
+          {activeCategory === "focus" ? (
+            <>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={currentModeKey === "short_focus"}
+                disabled={isTabsDisabled}
+                onClick={() => handleSelectSubMode("short_focus")}
+                className={cn(
+                  "py-1.5 px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation min-h-[32px]",
+                  currentModeKey === "short_focus"
+                    ? "bg-background text-foreground font-semibold shadow-2xs border border-border/70"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+                  isTabsDisabled && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                <span>Short</span>
+                <span className="text-[10px] font-normal text-muted-foreground">
+                  ({POMODORO_MODES.short_focus.durationMinutes}m)
+                </span>
+              </button>
+
+              <button
+                type="button"
+                role="tab"
+                aria-selected={currentModeKey === "long_focus"}
+                disabled={isTabsDisabled}
+                onClick={() => handleSelectSubMode("long_focus")}
+                className={cn(
+                  "py-1.5 px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation min-h-[32px]",
+                  currentModeKey === "long_focus"
+                    ? "bg-background text-foreground font-semibold shadow-2xs border border-border/70"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+                  isTabsDisabled && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                <span>Long</span>
+                <span className="text-[10px] font-normal text-muted-foreground">
+                  ({POMODORO_MODES.long_focus.durationMinutes}m)
+                </span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={currentModeKey === "short_break"}
+                disabled={isTabsDisabled}
+                onClick={() => handleSelectSubMode("short_break")}
+                className={cn(
+                  "py-1.5 px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation min-h-[32px]",
+                  currentModeKey === "short_break"
+                    ? "bg-background text-foreground font-semibold shadow-2xs border border-border/70"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+                  isTabsDisabled && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                <span>Short</span>
+                <span className="text-[10px] font-normal text-muted-foreground">
+                  ({POMODORO_MODES.short_break.durationMinutes}m)
+                </span>
+              </button>
+
+              <button
+                type="button"
+                role="tab"
+                aria-selected={currentModeKey === "long_break"}
+                disabled={isTabsDisabled}
+                onClick={() => handleSelectSubMode("long_break")}
+                className={cn(
+                  "py-1.5 px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation min-h-[32px]",
+                  currentModeKey === "long_break"
+                    ? "bg-background text-foreground font-semibold shadow-2xs border border-border/70"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+                  isTabsDisabled && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                <span>Long</span>
+                <span className="text-[10px] font-normal text-muted-foreground">
+                  ({POMODORO_MODES.long_break.durationMinutes}m)
+                </span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Main Timer Card */}

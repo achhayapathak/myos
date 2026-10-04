@@ -121,7 +121,7 @@ export async function getFocusPageData(): Promise<FocusPageData | null> {
   return {
     user: {
       id: user.id,
-      displayName: profile?.display_name || user.email?.split("@")[0] || null,
+      displayName: profile?.display_name || "master",
       email: user.email || null,
     },
     activeSession,

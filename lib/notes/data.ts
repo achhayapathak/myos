@@ -39,7 +39,7 @@ export async function getNotesPageData(): Promise<NotesPageData | null> {
   return {
     user: {
       id: user.id,
-      displayName: user.email?.split("@")[0] || null,
+      displayName: "master",
       email: user.email || null,
     },
     notes: notes || [],

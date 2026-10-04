@@ -24,7 +24,6 @@ export default async function TodayPage() {
   }
 
   const {
-    user,
     bounds,
     tasksDueToday,
     reminders,
@@ -41,7 +40,7 @@ export default async function TodayPage() {
     <div className="flex flex-col gap-6 max-w-5xl mx-auto pb-12">
       {/* 1. Header with greeting, formatted date, and metric summary */}
       <TodayHeader
-        displayName={user.displayName || "there"}
+        displayName="master"
         formattedDate={bounds.formattedDate}
         greeting={bounds.greeting}
         timeZone="Asia/Kolkata"
@@ -74,13 +73,13 @@ export default async function TodayPage() {
             totalCount={habitsSummary?.totalCount || 0}
             timeZone={bounds.timeZone}
           />
-
-          {/* Quick Note / Scratchpad Creation */}
-          <QuickNoteForm />
         </div>
 
-        {/* Companion Right Column: Focus Status, Reminders & Upcoming Schedule */}
+        {/* Companion Right Column: Quick Note, Focus Status, Reminders & Upcoming Schedule */}
         <div className="lg:col-span-5 flex flex-col gap-5">
+          {/* Quick Note / Scratchpad Creation */}
+          <QuickNoteForm />
+
           {/* Pomodoro & Focus Status */}
           <FocusStatusCard summary={focusSummary} />
 

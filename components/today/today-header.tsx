@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 import { DigitalClock } from "./digital-clock"
 
 interface TodayHeaderProps {
-  displayName: string
+  displayName?: string
   formattedDate: string
   greeting: string
   pendingDueCount: number
@@ -24,7 +24,7 @@ interface TodayHeaderProps {
 }
 
 export function TodayHeader({
-  displayName,
+  displayName = "master",
   formattedDate,
   greeting,
   pendingDueCount,

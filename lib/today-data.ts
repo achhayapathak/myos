@@ -54,7 +54,7 @@ export async function getTodayDashboardData(): Promise<TodayDashboardData | null
     .maybeSingle()
 
   const timeZone = profile?.timezone || "Asia/Kolkata"
-  const displayName = profile?.display_name || user.email?.split("@")[0] || "there"
+  const displayName = "master"
   const bounds = getTodayDateBounds(timeZone)
 
   // 2. Execute queries in parallel

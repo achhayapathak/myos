@@ -143,6 +143,37 @@ describe("Today Dashboard Unit Tests", () => {
       expect(content).toContain("TodayReminders")
       expect(content).not.toContain("<HighPriorityTasks")
     })
+
+    it("renders greeting with 'master' by default instead of name from email", async () => {
+      const { TodayHeader } = await import("@/components/today/today-header")
+      const { renderToStaticMarkup } = await import("react-dom/server")
+      const html = renderToStaticMarkup(
+        TodayHeader({
+          formattedDate: "Sunday, October 4, 2026",
+          greeting: "Good evening",
+          pendingDueCount: 3,
+          completedTodayCount: 1,
+          focusMinutesToday: 25,
+        })
+      )
+      expect(html).toContain("Good evening, master.")
+    })
+
+    it("verifies Today page explicitly passes 'master' to TodayHeader", () => {
+      const pagePath = path.join(rootDir, "app/(app)/today/page.tsx")
+      const content = fs.readFileSync(pagePath, "utf-8")
+      expect(content).toContain('displayName="master"')
+    })
+
+    it("verifies QuickNoteForm is placed in companion column directly above FocusStatusCard", () => {
+      const pagePath = path.join(rootDir, "app/(app)/today/page.tsx")
+      const content = fs.readFileSync(pagePath, "utf-8")
+      const quickNoteIndex = content.indexOf("<QuickNoteForm />")
+      const focusStatusIndex = content.indexOf("<FocusStatusCard")
+      expect(quickNoteIndex).toBeGreaterThan(-1)
+      expect(focusStatusIndex).toBeGreaterThan(-1)
+      expect(quickNoteIndex).toBeLessThan(focusStatusIndex)
+    })
   })
 
   describe("2. Date Bounds & Timezone Calculations", () => {

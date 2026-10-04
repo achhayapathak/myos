@@ -39,7 +39,7 @@ export default function AuthLayout({
           <Shield className="size-3 text-emerald-500" />
           <span>Private Single-User</span>
         </div>
-        <span>PostgreSQL RLS</span>
+        {/* <span>PostgreSQL RLS</span> */}
       </footer>
     </div>
   )

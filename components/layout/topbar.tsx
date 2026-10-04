@@ -63,10 +63,10 @@ export function Topbar() {
         </button>
 
         {/* Architecture status badge */}
-        <div className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border/50 bg-muted/30 text-[10px] font-mono text-muted-foreground">
+        {/* <div className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border/50 bg-muted/30 text-[10px] font-mono text-muted-foreground">
           <Database className="size-3 text-emerald-500" />
           <span>PostgreSQL RLS</span>
-        </div>
+        </div> */}
 
         {/* Theme toggle for topbar */}
         <div className="md:hidden">

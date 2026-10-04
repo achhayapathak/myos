@@ -29,6 +29,9 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "MyOS",
   },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
   icons: {
     icon: [
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },

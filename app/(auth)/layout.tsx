@@ -1,7 +1,8 @@
 import * as React from "react"
 import Link from "next/link"
-import { Terminal, Shield } from "lucide-react"
+import { Shield } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { BrandLogo } from "@/components/layout/brand-logo"
 
 export default function AuthLayout({
   children,
@@ -16,9 +17,7 @@ export default function AuthLayout({
           href="/login"
           className="flex items-center gap-2 group transition-opacity hover:opacity-80"
         >
-          <div className="size-6 rounded-md bg-foreground text-background flex items-center justify-center font-mono font-bold text-xs shadow-xs">
-            <Terminal className="size-3.5" />
-          </div>
+          <BrandLogo className="size-6 rounded-md shadow-xs" />
           <span className="font-semibold text-sm tracking-tight font-mono">
             MyOS
           </span>

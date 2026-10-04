@@ -1,14 +1,13 @@
 import Link from "next/link"
-import { Terminal, Home, Search } from "lucide-react"
+import { Home, Search } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { BrandLogo } from "@/components/layout/brand-logo"
 
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-background text-foreground antialiased selection:bg-foreground selection:text-background">
-      <div className="size-12 rounded-2xl bg-muted border border-border flex items-center justify-center mb-6">
-        <Terminal className="size-6 text-muted-foreground" />
-      </div>
+      <BrandLogo className="size-12 rounded-2xl shadow-sm mb-6" />
 
       <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-border/80 bg-muted/40 font-mono text-xs text-muted-foreground mb-4">
         <span>404</span>

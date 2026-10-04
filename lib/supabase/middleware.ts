@@ -16,8 +16,15 @@ export function getAuthRedirect(pathname: string, user: User | null): string | n
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/auth/callback")
 
+  const isPublicAsset =
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/manifest.json" ||
+    pathname === "/sw.js" ||
+    pathname === "/offline" ||
+    pathname === "/favicon.ico"
+
   // Unauthenticated user attempting to access protected route
-  if (!user && !isAuthRoute) {
+  if (!user && !isAuthRoute && !isPublicAsset) {
     return "/login"
   }
 

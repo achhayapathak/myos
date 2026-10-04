@@ -12,8 +12,11 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - manifest.webmanifest / manifest.json (PWA manifest)
+     * - sw.js (service worker)
+     * - offline (offline fallback shell)
      * - static image/asset extensions
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest\\.webmanifest|manifest\\.json|sw\\.js|offline|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 }

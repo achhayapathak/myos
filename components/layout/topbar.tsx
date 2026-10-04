@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation"
 import { NAV_ITEMS } from "@/components/layout/nav-items"
 import { useCommandPalette } from "@/components/command-palette"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Search, Terminal, Database } from "lucide-react"
+import { Search, Database } from "lucide-react"
+import { BrandLogo } from "@/components/layout/brand-logo"
 
 export function Topbar() {
   const pathname = usePathname()
@@ -27,9 +28,7 @@ export function Topbar() {
           href="/today"
           className="md:hidden flex items-center gap-1.5 px-1.5 py-1 rounded-md hover:bg-muted/50 transition-colors shrink-0"
         >
-          <div className="size-5 rounded bg-foreground text-background flex items-center justify-center font-mono font-bold text-[10px]">
-            <Terminal className="size-3" />
-          </div>
+          <BrandLogo className="size-5 rounded" />
           <span className="font-semibold text-xs tracking-tight">MyOS</span>
         </Link>
 

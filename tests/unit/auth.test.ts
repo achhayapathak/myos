@@ -67,6 +67,20 @@ describe("Authentication & Route Protection", () => {
         expect(getAuthRedirect(route, null)).toBeNull()
       }
     })
+
+    it("allows unauthenticated users and browser PWA crawlers to access public PWA assets", () => {
+      const publicAssets = [
+        "/manifest.webmanifest",
+        "/manifest.json",
+        "/sw.js",
+        "/offline",
+        "/favicon.ico",
+      ]
+
+      for (const asset of publicAssets) {
+        expect(getAuthRedirect(asset, null)).toBeNull()
+      }
+    })
   })
 
   describe("2. Authenticated Access", () => {

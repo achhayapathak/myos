@@ -22,8 +22,21 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(PRECACHE_ASSETS)
+      .then(async (cache) => {
+        // Cache assets safely without failing installation if any individual route returns redirect
+        await Promise.allSettled(
+          PRECACHE_ASSETS.map((asset) =>
+            fetch(asset)
+              .then((response) => {
+                if (response.ok && response.status === 200) {
+                  return cache.put(asset, response)
+                }
+              })
+              .catch(() => {
+                // Ignore transient network or redirect errors during installation
+              })
+          )
+        )
       })
       .then(() => self.skipWaiting())
   )

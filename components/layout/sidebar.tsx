@@ -7,8 +7,9 @@ import { cn } from "@/lib/utils"
 import { NAV_ITEMS } from "@/components/layout/nav-items"
 import { useCommandPalette } from "@/components/command-palette"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Search, Terminal, ShieldCheck, Settings, LogOut } from "lucide-react"
+import { Search, ShieldCheck, Settings, LogOut } from "lucide-react"
 import { logout } from "@/app/(auth)/actions"
+import { BrandLogo } from "@/components/layout/brand-logo"
 
 export function DesktopSidebar() {
   const pathname = usePathname()
@@ -30,9 +31,7 @@ export function DesktopSidebar() {
           className="flex items-center justify-between group px-2 py-1 rounded-md transition-colors hover:bg-muted/50"
         >
           <div className="flex items-center gap-2.5">
-            <div className="size-6 rounded-md bg-foreground text-background flex items-center justify-center font-mono font-bold text-xs shadow-xs">
-              <Terminal className="size-3.5" />
-            </div>
+            <BrandLogo className="size-6 rounded-md shadow-xs" />
             <div className="flex flex-col">
               <span className="font-semibold text-sm tracking-tight leading-none text-foreground">
                 MyOS

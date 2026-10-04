@@ -8,6 +8,15 @@
  *   node --env-file=.env.local scripts/check-supabase.mjs
  */
 
+// Automatically load .env.local if not already provided via --env-file
+if (typeof process.loadEnvFile === "function") {
+  try {
+    process.loadEnvFile(".env.local")
+  } catch {
+    // Ignore if .env.local is not present; missing variables will be caught below
+  }
+}
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY

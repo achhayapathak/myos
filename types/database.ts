@@ -20,6 +20,9 @@ export type Profile = {
   user_id: string
   display_name: string | null
   timezone: string
+  habit_notifications_enabled?: boolean
+  habit_morning_time?: string | null
+  habit_evening_time?: string | null
   created_at: string
   updated_at: string
 }
@@ -29,6 +32,9 @@ export type ProfileInsert = {
   user_id?: string
   display_name?: string | null
   timezone?: string
+  habit_notifications_enabled?: boolean
+  habit_morning_time?: string | null
+  habit_evening_time?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -38,6 +44,9 @@ export type ProfileUpdate = {
   user_id?: string
   display_name?: string | null
   timezone?: string
+  habit_notifications_enabled?: boolean
+  habit_morning_time?: string | null
+  habit_evening_time?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -298,6 +307,7 @@ export type Habit = {
   frequency_type: HabitFrequency
   target_days: number[] | null
   color: string | null
+  reminder_time?: string | null
   archived: boolean
   created_at: string
   updated_at: string
@@ -311,6 +321,7 @@ export type HabitInsert = {
   frequency_type: HabitFrequency
   target_days?: number[] | null
   color?: string | null
+  reminder_time?: string | null
   archived?: boolean
   created_at?: string
   updated_at?: string
@@ -324,6 +335,7 @@ export type HabitUpdate = {
   frequency_type?: HabitFrequency
   target_days?: number[] | null
   color?: string | null
+  reminder_time?: string | null
   archived?: boolean
   created_at?: string
   updated_at?: string

@@ -32,7 +32,7 @@ export async function createHabit(
     return { success: false, error: firstIssue }
   }
 
-  const { name, description, frequency_type, target_days, color } = parseResult.data
+  const { name, description, frequency_type, target_days, color, reminder_time } = parseResult.data
 
   const supabase = await createClient()
 
@@ -45,6 +45,7 @@ export async function createHabit(
       frequency_type,
       target_days: frequency_type === "weekly" ? target_days ?? null : null,
       color: color || null,
+      reminder_time: reminder_time || null,
       archived: false,
     })
     .select()
@@ -138,7 +139,7 @@ export async function updateHabit(
     return { success: false, error: firstIssue }
   }
 
-  const { name, description, frequency_type, target_days, color, archived } =
+  const { name, description, frequency_type, target_days, color, reminder_time, archived } =
     parseResult.data
 
   const supabase = await createClient()
@@ -149,6 +150,7 @@ export async function updateHabit(
     frequency_type: "daily" | "weekly"
     target_days: number[] | null
     color: string | null
+    reminder_time?: string | null
     archived?: boolean
   } = {
     name,
@@ -156,6 +158,7 @@ export async function updateHabit(
     frequency_type,
     target_days: frequency_type === "weekly" ? target_days ?? null : null,
     color: color || null,
+    reminder_time: reminder_time || null,
   }
 
   if (archived !== undefined) {

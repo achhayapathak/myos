@@ -10,6 +10,7 @@ import {
   getLocalDateString,
   addDays,
   getDatesInRange,
+  formatHabitReminderTime,
 } from "@/lib/habits/calculations"
 
 describe("Habit Calculations & Scheduling Unit Tests", () => {
@@ -351,6 +352,17 @@ describe("Habit Calculations & Scheduling Unit Tests", () => {
 
       const newYorkDateStr = getLocalDateString(testUtcDate, "America/New_York")
       expect(newYorkDateStr).toBe("2026-10-04")
+    })
+
+    it("formats 24-hour HH:mm time string into 12-hour AM/PM format", () => {
+      expect(formatHabitReminderTime("08:30")).toBe("8:30 AM")
+      expect(formatHabitReminderTime("00:00")).toBe("12:00 AM")
+      expect(formatHabitReminderTime("12:00")).toBe("12:00 PM")
+      expect(formatHabitReminderTime("13:45")).toBe("1:45 PM")
+      expect(formatHabitReminderTime("20:00")).toBe("8:00 PM")
+      expect(formatHabitReminderTime("23:59")).toBe("11:59 PM")
+      expect(formatHabitReminderTime(null)).toBe("")
+      expect(formatHabitReminderTime(undefined)).toBe("")
     })
   })
 })

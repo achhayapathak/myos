@@ -241,6 +241,7 @@ export async function getTodayHabitsData(): Promise<TodayHabitsData | null> {
       frequency_type: h.frequency_type,
       target_days: h.target_days,
       color: h.color,
+      reminder_time: h.reminder_time || null,
       isCompleted,
       currentStreak,
     }

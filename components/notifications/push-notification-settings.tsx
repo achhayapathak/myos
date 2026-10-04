@@ -11,10 +11,21 @@ import {
   Send,
   Trash2,
   RefreshCw,
+  Sun,
+  Flame,
+  Sparkles,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { usePushNotifications } from "./use-push-notifications"
+import {
+  getHabitNotificationPreferencesAction,
+  updateHabitNotificationPreferencesAction,
+  sendTestHabitPushAction,
+  type HabitNotificationPreferences,
+} from "@/app/(app)/settings/push-actions"
 
 export function PushNotificationSettings() {
   const {
@@ -32,6 +43,58 @@ export function PushNotificationSettings() {
 
   const [testSent, setTestSent] = React.useState(false)
   const [actionPending, setActionPending] = React.useState(false)
+
+  // Habit Notification Preferences State
+  const [habitPrefs, setHabitPrefs] = React.useState<HabitNotificationPreferences>({
+    enabled: true,
+    morningTime: "09:00",
+    eveningTime: "20:00",
+  })
+  const [habitTestSent, setHabitTestSent] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    let mounted = true
+    async function loadHabitPrefs() {
+      try {
+        const res = await getHabitNotificationPreferencesAction()
+        if (mounted && res.success && res.data) {
+          setHabitPrefs(res.data)
+        }
+      } catch {
+        // Best effort
+      }
+    }
+    loadHabitPrefs()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const handleToggleHabitNotifications = async () => {
+    const nextEnabled = !habitPrefs.enabled
+    setHabitPrefs((prev) => ({ ...prev, enabled: nextEnabled }))
+    await updateHabitNotificationPreferencesAction({ enabled: nextEnabled })
+  }
+
+  const handleUpdateMorningTime = async (time: string) => {
+    setHabitPrefs((prev) => ({ ...prev, morningTime: time }))
+    await updateHabitNotificationPreferencesAction({ morningTime: time })
+  }
+
+  const handleUpdateEveningTime = async (time: string) => {
+    setHabitPrefs((prev) => ({ ...prev, eveningTime: time }))
+    await updateHabitNotificationPreferencesAction({ eveningTime: time })
+  }
+
+  const handleSendHabitTest = async (type: "morning" | "evening") => {
+    setActionPending(true)
+    const res = await sendTestHabitPushAction(type)
+    setActionPending(false)
+    if (res.success) {
+      setHabitTestSent(type)
+      setTimeout(() => setHabitTestSent(null), 4000)
+    }
+  }
 
   const handleSubscribe = async () => {
     setActionPending(true)
@@ -223,6 +286,121 @@ export function PushNotificationSettings() {
                 </Button>
               )}
             </>
+          )}
+        </div>
+      )}
+
+      {/* Habit Reminders Sub-section */}
+      {isSupported && isSubscribed && (
+        <div className="pt-4 mt-2 border-t border-border/40 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="size-4 text-primary" />
+              <div>
+                <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider font-mono">
+                  Habit Reminders & Smart Check-ins
+                </h4>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Automated morning kickoff, evening streak saver, and custom habit times.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              role="switch"
+              aria-checked={habitPrefs.enabled}
+              aria-label="Toggle habit reminders"
+              onClick={handleToggleHabitNotifications}
+              className={cn(
+                "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+                habitPrefs.enabled ? "bg-primary" : "bg-muted-foreground/30"
+              )}
+            >
+              <span
+                className={cn(
+                  "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out",
+                  habitPrefs.enabled ? "translate-x-4" : "translate-x-0"
+                )}
+              />
+            </button>
+          </div>
+
+          {habitPrefs.enabled && (
+            <div className="flex flex-col gap-3.5 bg-muted/20 p-3.5 rounded-lg border border-border/40">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Morning Kickoff */}
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="habit-morning-time"
+                    className="text-xs font-medium text-foreground flex items-center gap-1.5"
+                  >
+                    <Sun className="size-3.5 text-amber-500" />
+                    <span>Morning Kickoff Digest</span>
+                  </label>
+                  <Input
+                    id="habit-morning-time"
+                    type="time"
+                    value={habitPrefs.morningTime}
+                    onChange={(e) => handleUpdateMorningTime(e.target.value)}
+                    className="h-8 font-mono text-xs bg-background border-border/60"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Daily overview of all habits scheduled for today.
+                  </p>
+                </div>
+
+                {/* Evening Streak Saver */}
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="habit-evening-time"
+                    className="text-xs font-medium text-foreground flex items-center gap-1.5"
+                  >
+                    <Flame className="size-3.5 text-orange-500" />
+                    <span>Evening Streak Saver</span>
+                  </label>
+                  <Input
+                    id="habit-evening-time"
+                    type="time"
+                    value={habitPrefs.eveningTime}
+                    onChange={(e) => handleUpdateEveningTime(e.target.value)}
+                    className="h-8 font-mono text-xs bg-background border-border/60"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Only alerts you if scheduled habits remain incomplete.
+                  </p>
+                </div>
+              </div>
+
+              {/* Habit Test Buttons */}
+              <div className="pt-2 border-t border-border/30 flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSendHabitTest("morning")}
+                  disabled={actionPending}
+                  className="gap-1.5 font-mono text-[11px] h-7 cursor-pointer"
+                >
+                  <Sun className="size-3 text-amber-500" />
+                  <span>
+                    {habitTestSent === "morning" ? "Morning Alert Sent!" : "Test Morning Kickoff"}
+                  </span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSendHabitTest("evening")}
+                  disabled={actionPending}
+                  className="gap-1.5 font-mono text-[11px] h-7 cursor-pointer"
+                >
+                  <Flame className="size-3 text-orange-500" />
+                  <span>
+                    {habitTestSent === "evening" ? "Streak Saver Sent!" : "Test Streak Saver"}
+                  </span>
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       )}

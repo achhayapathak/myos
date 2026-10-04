@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Loader2 } from "lucide-react"
+import { Loader2, Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Dialog,
@@ -53,6 +53,9 @@ function HabitFormFields({ habit, onClose, onSuccess }: HabitFormFieldsProps) {
       ? habit.target_days
       : [1, 2, 3, 4, 5]
   )
+  const [reminderTime, setReminderTime] = React.useState<string>(
+    habit?.reminder_time || ""
+  )
   const [error, setError] = React.useState<string | null>(null)
   const [isPending, startTransition] = React.useTransition()
 
@@ -79,6 +82,7 @@ function HabitFormFields({ habit, onClose, onSuccess }: HabitFormFieldsProps) {
       description: description.trim() ? description.trim() : null,
       frequency_type: frequencyType,
       target_days: frequencyType === "weekly" ? targetDays : null,
+      reminder_time: reminderTime.trim() ? reminderTime.trim() : null,
     }
 
     if (isEditing && habit) {
@@ -267,6 +271,38 @@ function HabitFormFields({ habit, onClose, onSuccess }: HabitFormFieldsProps) {
             )}
           </div>
         )}
+
+        {/* Optional Reminder Time */}
+        <div className="flex flex-col gap-1.5 pt-1 border-t border-border/40">
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="habit-reminder-time"
+              className="text-xs font-medium text-foreground flex items-center gap-1.5"
+            >
+              <Bell className="size-3.5 text-muted-foreground" />
+              <span>Daily Reminder Time (Optional)</span>
+            </label>
+            {reminderTime && (
+              <button
+                type="button"
+                onClick={() => setReminderTime("")}
+                className="text-[10px] font-mono text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                Clear time
+              </button>
+            )}
+          </div>
+          <Input
+            id="habit-reminder-time"
+            type="time"
+            value={reminderTime}
+            onChange={(e) => setReminderTime(e.target.value)}
+            className="h-9 font-mono text-sm bg-background border-border/70"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Get an instant push notification at this time on scheduled days.
+          </p>
+        </div>
 
         {/* Form Actions */}
         <div className="flex items-center justify-end gap-2 pt-3 border-t border-border/60">

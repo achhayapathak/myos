@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { Flame, ChevronRight } from "lucide-react"
+import { Flame, ChevronRight, Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { HabitCompletionButton } from "./HabitCompletionButton"
+import { formatHabitReminderTime } from "@/lib/habits/calculations"
 import type { HabitWithStats, TodayHabitItem } from "@/lib/habits/types"
 
 export interface HabitItemProps {
@@ -73,6 +74,12 @@ export function HabitItem({
             >
               {habit.name}
             </span>
+            {habit.reminder_time && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-mono text-muted-foreground shrink-0">
+                <Bell className="size-2.5" />
+                <span>{formatHabitReminderTime(habit.reminder_time)}</span>
+              </span>
+            )}
           </div>
 
           {habit.description && (

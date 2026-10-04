@@ -10,6 +10,21 @@ export const targetDaySchema = z
   .min(1, "Day must be between 1 (Monday) and 7 (Sunday)")
   .max(7, "Day must be between 1 (Monday) and 7 (Sunday)")
 
+export const reminderTimeSchema = z.preprocess(
+  (val) => {
+    if (typeof val === "string") {
+      const trimmed = val.trim()
+      return trimmed === "" ? null : trimmed
+    }
+    return val
+  },
+  z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Reminder time must be in HH:mm format (e.g. 08:30)")
+    .nullable()
+    .optional()
+)
+
 export const createHabitSchema = z
   .object({
     name: z
@@ -27,6 +42,7 @@ export const createHabitSchema = z
     frequency_type: habitFrequencySchema,
     target_days: z.array(targetDaySchema).optional().nullable(),
     color: z.string().trim().max(50).optional().nullable(),
+    reminder_time: reminderTimeSchema,
   })
   .refine(
     (data) => {
@@ -71,6 +87,7 @@ export const updateHabitSchema = z
     frequency_type: habitFrequencySchema,
     target_days: z.array(targetDaySchema).optional().nullable(),
     color: z.string().trim().max(50).optional().nullable(),
+    reminder_time: reminderTimeSchema,
     archived: z.boolean().optional(),
   })
   .refine(

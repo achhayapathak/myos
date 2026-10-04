@@ -37,6 +37,7 @@ export interface TodayHabitItem {
   frequency_type: "daily" | "weekly"
   target_days: number[] | null
   color: string | null
+  reminder_time?: string | null
   isCompleted: boolean
   currentStreak: number
 }

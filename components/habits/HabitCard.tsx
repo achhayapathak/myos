@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { Flame, Trophy, TrendingUp, ChevronRight } from "lucide-react"
+import { Flame, Trophy, TrendingUp, ChevronRight, Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { HabitCompletionButton } from "./HabitCompletionButton"
+import { formatHabitReminderTime } from "@/lib/habits/calculations"
 import type { HabitWithStats } from "@/lib/habits/types"
 
 export interface HabitCardProps {
@@ -71,6 +72,15 @@ export function HabitCard({
 
             <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
               <span className="font-mono text-[11px]">{habit.scheduleLabel}</span>
+              {habit.reminder_time && (
+                <>
+                  <span>•</span>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
+                    <Bell className="size-2.5" />
+                    <span>{formatHabitReminderTime(habit.reminder_time)}</span>
+                  </span>
+                </>
+              )}
               {habit.isScheduledToday && (
                 <>
                   <span>•</span>

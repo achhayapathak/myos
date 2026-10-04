@@ -21,6 +21,17 @@ export interface PomodoroPushParams {
   taskTitle?: string | null
 }
 
+export interface HabitPushParams {
+  habitId: string
+  habitName: string
+  description?: string | null
+}
+
+export interface HabitDigestPushParams {
+  type: "morning" | "evening"
+  habitNames: string[]
+}
+
 /**
  * High-level Notification Service Abstraction.
  * Isolates delivery mechanisms (Web Push, future channels) from core domain logic.
@@ -196,6 +207,73 @@ export class NotificationService {
       data: {
         type: "pomodoro",
         sessionType: params.type,
+      },
+    }
+
+    return this.sendNotificationToUser(supabase, userId, payload)
+  }
+
+  /**
+   * Sends an individual habit reminder notification.
+   */
+  async sendHabitReminderPush(
+    supabase: SupabaseClient<Database>,
+    userId: string,
+    params: HabitPushParams
+  ): Promise<UserNotificationBatchResult> {
+    const payload: NotificationPayload = {
+      title: `Habit Reminder: ${params.habitName}`,
+      body: params.description || "Time to complete your habit and protect your streak!",
+      url: "/habits",
+      tag: `habit-${params.habitId}`,
+      data: {
+        type: "habit",
+        habitId: params.habitId,
+      },
+    }
+
+    return this.sendNotificationToUser(supabase, userId, payload)
+  }
+
+  /**
+   * Sends a daily habit smart digest notification (Morning Kickoff or Evening Streak Saver).
+   */
+  async sendHabitDailyDigestPush(
+    supabase: SupabaseClient<Database>,
+    userId: string,
+    params: HabitDigestPushParams
+  ): Promise<UserNotificationBatchResult> {
+    let title: string
+    let body: string
+    let tag: string
+
+    const habitPreview = params.habitNames.slice(0, 3).join(", ")
+    const moreSuffix = params.habitNames.length > 3 ? ` +${params.habitNames.length - 3} more` : ""
+
+    if (params.type === "morning") {
+      title = "🌅 Morning Habit Kickoff"
+      body =
+        params.habitNames.length > 0
+          ? `You have ${params.habitNames.length} habits scheduled today: ${habitPreview}${moreSuffix}.`
+          : "Ready to make today great? Check your scheduled daily habits."
+      tag = "habit-morning-kickoff"
+    } else {
+      title = "🔥 Protect Your Streak!"
+      body =
+        params.habitNames.length > 0
+          ? `Keep your streak going! ${params.habitNames.length} ${params.habitNames.length === 1 ? "habit" : "habits"} remaining: ${habitPreview}${moreSuffix}.`
+          : "All scheduled habits are completed! Amazing job today!"
+      tag = "habit-evening-saver"
+    }
+
+    const payload: NotificationPayload = {
+      title,
+      body,
+      url: "/today",
+      tag,
+      data: {
+        type: "habit-digest",
+        digestType: params.type,
       },
     }
 

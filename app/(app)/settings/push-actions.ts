@@ -239,3 +239,136 @@ export async function sendReminderPushAction(
 
   return { success: true }
 }
+
+const habitPreferencesSchema = z.object({
+  enabled: z.boolean().optional(),
+  morningTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:mm format")
+    .optional()
+    .nullable(),
+  eveningTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:mm format")
+    .optional()
+    .nullable(),
+})
+
+export interface HabitNotificationPreferences {
+  enabled: boolean
+  morningTime: string
+  eveningTime: string
+}
+
+/**
+ * Retrieves habit notification preferences for authenticated user.
+ */
+export async function getHabitNotificationPreferencesAction(): Promise<
+  PushActionResponse<HabitNotificationPreferences>
+> {
+  const user = await getCurrentUser()
+  if (!user) {
+    return { success: false, error: "Unauthorized: Active session required." }
+  }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("habit_notifications_enabled, habit_morning_time, habit_evening_time")
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  return {
+    success: true,
+    data: {
+      enabled: data?.habit_notifications_enabled ?? true,
+      morningTime: data?.habit_morning_time || "09:00",
+      eveningTime: data?.habit_evening_time || "20:00",
+    },
+  }
+}
+
+/**
+ * Updates habit notification preferences for authenticated user.
+ */
+export async function updateHabitNotificationPreferencesAction(
+  rawInput: unknown
+): Promise<PushActionResponse<HabitNotificationPreferences>> {
+  const user = await getCurrentUser()
+  if (!user) {
+    return { success: false, error: "Unauthorized: Active session required." }
+  }
+
+  const parseResult = habitPreferencesSchema.safeParse(rawInput)
+  if (!parseResult.success) {
+    const errorMsg = parseResult.error.issues[0]?.message || "Invalid input."
+    return { success: false, error: errorMsg }
+  }
+
+  const supabase = await createClient()
+  const updatePayload: {
+    habit_notifications_enabled?: boolean
+    habit_morning_time?: string | null
+    habit_evening_time?: string | null
+  } = {}
+
+  if (parseResult.data.enabled !== undefined) {
+    updatePayload.habit_notifications_enabled = parseResult.data.enabled
+  }
+  if (parseResult.data.morningTime !== undefined) {
+    updatePayload.habit_morning_time = parseResult.data.morningTime
+  }
+  if (parseResult.data.eveningTime !== undefined) {
+    updatePayload.habit_evening_time = parseResult.data.eveningTime
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update(updatePayload)
+    .eq("user_id", user.id)
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath("/settings")
+  return getHabitNotificationPreferencesAction()
+}
+
+/**
+ * Sends a test habit push notification.
+ */
+export async function sendTestHabitPushAction(
+  type: "morning" | "evening" | "habit"
+): Promise<PushActionResponse<void>> {
+  const user = await getCurrentUser()
+  if (!user) {
+    return { success: false, error: "Unauthorized: Active session required." }
+  }
+
+  const supabase = await createClient()
+
+  if (type === "morning") {
+    await notificationService.sendHabitDailyDigestPush(supabase, user.id, {
+      type: "morning",
+      habitNames: ["Morning Meditation", "Drink 2L Water", "Read 20 Mins"],
+    })
+  } else if (type === "evening") {
+    await notificationService.sendHabitDailyDigestPush(supabase, user.id, {
+      type: "evening",
+      habitNames: ["Read 20 Mins"],
+    })
+  } else {
+    await notificationService.sendHabitReminderPush(supabase, user.id, {
+      habitId: "test-habit-id",
+      habitName: "Morning Meditation",
+      description: "Take 10 minutes to breathe and center yourself.",
+    })
+  }
+
+  return { success: true }
+}

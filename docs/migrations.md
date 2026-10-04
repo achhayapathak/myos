@@ -21,6 +21,7 @@ All migrations are designed to be **idempotent** (`IF NOT EXISTS`, `OR REPLACE`)
 | **5** | `20261003000002_performance_indexes.sql` | Adds composite and partial indexes for hot paths: `(user_id, status, due_at)`, `(user_id, priority, status)`, `(user_id, completed, remind_at)`, and active Pomodoro sessions (`WHERE ended_at IS NULL`). |
 | **6** | `20261004000000_habits.sql` | Creates `habits` and `habit_completions` tables with RLS policies, indexes, and cascades. |
 | **7** | `20261004000001_pomodoro_pause.sql` | Adds `paused_at` column to `pomodoro_sessions` for pause and resume tracking. |
+| **8** | `20261004000002_habit_reminders.sql` | Adds optional `reminder_time` column to `habits` and adds habit notification preferences to `profiles`. |
 
 ---
 

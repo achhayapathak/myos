@@ -54,13 +54,21 @@ export function FocusStatusCard({ summary }: FocusStatusCardProps) {
               {Math.round(activeSession.duration_seconds / 60)}:00
             </div>
             <p className="text-xs font-medium text-foreground mt-1.5">
-              {activeSession.type === "focus"
-                ? activeSession.duration_seconds >= 45 * 60
-                  ? isPaused ? "Paused Long Focus (50m)" : "Active Long Focus (50m)"
-                  : isPaused ? "Paused Short Focus (25m)" : "Active Short Focus (25m)"
-                : activeSession.type === "short_break"
-                ? isPaused ? "Paused Short Break (5m)" : "Active Short Break (5m)"
-                : isPaused ? "Paused Long Break (15m)" : "Active Long Break (15m)"}
+              {(() => {
+                const mins = Math.round(activeSession.duration_seconds / 60)
+                const prefix = isPaused ? "Paused" : "Active"
+                if (activeSession.type === "focus") {
+                  if (mins === 25) return `${prefix} Short Focus (25m)`
+                  if (mins === 50) return `${prefix} Long Focus (50m)`
+                  return `${prefix} Custom Focus (${mins}m)`
+                }
+                if (activeSession.type === "short_break") {
+                  if (mins === 5) return `${prefix} Short Break (5m)`
+                  return `${prefix} Custom Break (${mins}m)`
+                }
+                if (mins === 15) return `${prefix} Long Break (15m)`
+                return `${prefix} Custom Break (${mins}m)`
+              })()}
             </p>
             {activeSession.task_title && (
               <p className="text-[11px] font-mono text-muted-foreground mt-0.5 truncate max-w-[220px]">

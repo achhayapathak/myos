@@ -234,6 +234,53 @@ describe("Focus / Pomodoro Server Actions & Security Tests", () => {
       )
     })
 
+    it("normalizes custom_focus type with custom duration seconds", async () => {
+      const { startPomodoroSession } = await import("@/app/(app)/focus/actions")
+
+      const res = await startPomodoroSession({
+        type: "custom_focus" as unknown as "focus",
+        duration_seconds: 45 * 60,
+      })
+
+      expect(res.success).toBe(true)
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "focus",
+          duration_seconds: 2700,
+        })
+      )
+    })
+
+    it("normalizes custom_break type to appropriate break type with custom duration", async () => {
+      const { startPomodoroSession } = await import("@/app/(app)/focus/actions")
+
+      const resLong = await startPomodoroSession({
+        type: "custom_break" as unknown as "focus",
+        duration_seconds: 10 * 60,
+      })
+
+      expect(resLong.success).toBe(true)
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "long_break",
+          duration_seconds: 600,
+        })
+      )
+
+      const resShort = await startPomodoroSession({
+        type: "custom_break" as unknown as "focus",
+        duration_seconds: 3 * 60,
+      })
+
+      expect(resShort.success).toBe(true)
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "short_break",
+          duration_seconds: 180,
+        })
+      )
+    })
+
     it("blocks unauthenticated users from starting sessions", async () => {
       mockGetUser.mockResolvedValueOnce({
         data: { user: null },

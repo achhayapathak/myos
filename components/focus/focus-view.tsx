@@ -11,6 +11,9 @@ import {
   Radio,
   Timer,
   Pause,
+  Sliders,
+  Minus,
+  Plus,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { PomodoroType, PomodoroSession } from "@/types/database"
@@ -90,23 +93,97 @@ export function FocusView({ initialData }: FocusViewProps) {
     return "short_focus"
   })
 
+  // Custom minutes state with persistence
+  const [customFocusMinutes, setCustomFocusMinutes] = React.useState<number>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("myos_custom_focus_minutes")
+        if (stored) {
+          const val = parseInt(stored, 10)
+          if (!isNaN(val) && val >= 1 && val <= 180) return val
+        }
+      } catch {
+        // Ignore
+      }
+    }
+    return 45
+  })
+
+  const [customBreakMinutes, setCustomBreakMinutes] = React.useState<number>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("myos_custom_break_minutes")
+        if (stored) {
+          const val = parseInt(stored, 10)
+          if (!isNaN(val) && val >= 1 && val <= 60) return val
+        }
+      } catch {
+        // Ignore
+      }
+    }
+    return 10
+  })
+
+  const handleUpdateCustomMinutes = React.useCallback(
+    (minutes: number, category: "focus" | "break") => {
+      const maxVal = category === "focus" ? 180 : 60
+      const clamped = Math.max(1, Math.min(maxVal, isNaN(minutes) ? 1 : minutes))
+      if (category === "focus") {
+        setCustomFocusMinutes(clamped)
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("myos_custom_focus_minutes", String(clamped))
+          } catch {
+            // Ignore
+          }
+        }
+      } else {
+        setCustomBreakMinutes(clamped)
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("myos_custom_break_minutes", String(clamped))
+          } catch {
+            // Ignore
+          }
+        }
+      }
+    },
+    []
+  )
+
   // Preferred sub-modes when switching between Focus and Break tabs
-  const [preferredFocusMode, setPreferredFocusMode] = React.useState<"short_focus" | "long_focus">(() => {
+  const [preferredFocusMode, setPreferredFocusMode] = React.useState<
+    "short_focus" | "long_focus" | "custom_focus"
+  >(() => {
     if (initialData.activeSession && initialData.activeSession.type === "focus") {
-      return initialData.activeSession.duration_seconds >= 45 * 60 ? "long_focus" : "short_focus"
+      const m = derivePomodoroMode(
+        initialData.activeSession.type,
+        initialData.activeSession.duration_seconds
+      )
+      return m === "long_focus" ? "long_focus" : m === "custom_focus" ? "custom_focus" : "short_focus"
     }
     return "short_focus"
   })
 
-  const [preferredBreakMode, setPreferredBreakMode] = React.useState<"short_break" | "long_break">(() => {
-    if (initialData.activeSession && initialData.activeSession.type === "long_break") {
-      return "long_break"
+  const [preferredBreakMode, setPreferredBreakMode] = React.useState<
+    "short_break" | "long_break" | "custom_break"
+  >(() => {
+    if (initialData.activeSession && initialData.activeSession.type !== "focus") {
+      const m = derivePomodoroMode(
+        initialData.activeSession.type,
+        initialData.activeSession.duration_seconds
+      )
+      return m === "long_break" ? "long_break" : m === "custom_break" ? "custom_break" : "short_break"
     }
     return "short_break"
   })
 
   const selectedType: PomodoroType = activeSession
     ? activeSession.type
+    : selectedMode === "custom_focus"
+    ? "focus"
+    : selectedMode === "custom_break"
+    ? customBreakMinutes > 5 ? "long_break" : "short_break"
     : POMODORO_MODES[selectedMode].type
 
   const [selectedTaskId, setSelectedTaskId] = React.useState<string | null>(
@@ -184,9 +261,16 @@ export function FocusView({ initialData }: FocusViewProps) {
   // Determine current Pomodoro state and remaining seconds strictly from timestamps
   const { state, remainingSeconds, isDone } = React.useMemo(() => {
     if (!activeSession) {
+      const idleDuration =
+        selectedMode === "custom_focus"
+          ? customFocusMinutes * 60
+          : selectedMode === "custom_break"
+          ? customBreakMinutes * 60
+          : POMODORO_MODES[selectedMode].durationSeconds
+
       return {
         state: "IDLE" as PomodoroState,
-        remainingSeconds: POMODORO_MODES[selectedMode].durationSeconds,
+        remainingSeconds: idleDuration,
         isDone: false,
       }
     }
@@ -230,7 +314,15 @@ export function FocusView({ initialData }: FocusViewProps) {
       remainingSeconds: remaining,
       isDone: completed,
     }
-  }, [activeSession, currentTime, selectedMode, isPaused, pausedSeconds])
+  }, [
+    activeSession,
+    currentTime,
+    selectedMode,
+    isPaused,
+    pausedSeconds,
+    customFocusMinutes,
+    customBreakMinutes,
+  ])
 
   // Track if completion was already persisted to avoid duplicate network calls
   const completionHandledRef = React.useRef<string | null>(null)
@@ -266,11 +358,13 @@ export function FocusView({ initialData }: FocusViewProps) {
 
   // Start Session
   const handleStartSession = React.useCallback(
-    (target: PomodoroMode | PomodoroType = selectedMode) => {
+    (target: PomodoroMode | PomodoroType | "break" = selectedMode) => {
       setErrorMessage(null)
       let modeToStart: PomodoroMode
       if (target === "focus") {
-        modeToStart = selectedMode === "long_focus" ? "long_focus" : "short_focus"
+        modeToStart = preferredFocusMode
+      } else if (target === "break") {
+        modeToStart = preferredBreakMode
       } else if (target === "short_break") {
         modeToStart = "short_break"
       } else if (target === "long_break") {
@@ -279,16 +373,30 @@ export function FocusView({ initialData }: FocusViewProps) {
         modeToStart = target
       }
 
-      const config = POMODORO_MODES[modeToStart]
+      let type: PomodoroType
+      let durationSeconds: number
+
+      if (modeToStart === "custom_focus") {
+        type = "focus"
+        durationSeconds = customFocusMinutes * 60
+      } else if (modeToStart === "custom_break") {
+        type = customBreakMinutes > 5 ? "long_break" : "short_break"
+        durationSeconds = customBreakMinutes * 60
+      } else {
+        const config = POMODORO_MODES[modeToStart]
+        type = config.type
+        durationSeconds = config.durationSeconds
+      }
+
       setSelectedMode(modeToStart)
       setPausedSeconds(null)
 
       startTransition(async () => {
         try {
           const res = await startPomodoroSession({
-            type: config.type,
-            duration_seconds: config.durationSeconds,
-            task_id: config.type === "focus" ? selectedTaskId : null,
+            type,
+            duration_seconds: durationSeconds,
+            task_id: type === "focus" ? selectedTaskId : null,
           })
 
           if (!res.success || !res.data) {
@@ -310,7 +418,15 @@ export function FocusView({ initialData }: FocusViewProps) {
         }
       })
     },
-    [initialData.availableTasks, selectedTaskId, selectedMode]
+    [
+      initialData.availableTasks,
+      selectedTaskId,
+      selectedMode,
+      preferredFocusMode,
+      preferredBreakMode,
+      customFocusMinutes,
+      customBreakMinutes,
+    ]
   )
 
   // Pause Session
@@ -452,16 +568,23 @@ export function FocusView({ initialData }: FocusViewProps) {
     }
   }
 
-  const currentDuration = activeSession
-    ? activeSession.duration_seconds
-    : POMODORO_MODES[selectedMode].durationSeconds
+  const currentDuration = React.useMemo(() => {
+    if (activeSession) return activeSession.duration_seconds
+    if (selectedMode === "custom_focus") return customFocusMinutes * 60
+    if (selectedMode === "custom_break") return customBreakMinutes * 60
+    return POMODORO_MODES[selectedMode].durationSeconds
+  }, [activeSession, selectedMode, customFocusMinutes, customBreakMinutes])
 
   const currentModeKey: PomodoroMode = activeSession
     ? derivePomodoroMode(activeSession.type, activeSession.duration_seconds)
     : selectedMode
 
   const activeCategory: "focus" | "break" =
-    currentModeKey === "short_focus" || currentModeKey === "long_focus" ? "focus" : "break"
+    currentModeKey === "short_focus" ||
+    currentModeKey === "long_focus" ||
+    currentModeKey === "custom_focus"
+      ? "focus"
+      : "break"
 
   const isTabsDisabled = state === "FOCUSING" || state === "SHORT_BREAK" || state === "PAUSED"
 
@@ -485,7 +608,11 @@ export function FocusView({ initialData }: FocusViewProps) {
       setErrorMessage(null)
       setActiveSession(null)
       setSelectedMode(mode)
-      if (mode === "short_focus" || mode === "long_focus") {
+      if (
+        mode === "short_focus" ||
+        mode === "long_focus" ||
+        mode === "custom_focus"
+      ) {
         setPreferredFocusMode(mode)
       } else {
         setPreferredBreakMode(mode)
@@ -534,8 +661,8 @@ export function FocusView({ initialData }: FocusViewProps) {
         </div>
       )}
 
-      {/* Category Tabs: Focus vs Break with Short & Long Sub-Tabs */}
-      <div className="w-full max-w-lg flex flex-col items-center gap-2">
+      {/* Category Tabs: Focus vs Break with Short, Long & Custom Sub-Tabs */}
+      <div className="w-full max-w-lg flex flex-col items-center gap-2.5">
         {/* Main Category Tabs: Only one can be selected at a time */}
         <div
           role="tablist"
@@ -579,11 +706,11 @@ export function FocusView({ initialData }: FocusViewProps) {
           </button>
         </div>
 
-        {/* Sub-tabs: Short vs Long with respective durations */}
+        {/* Sub-tabs: Short vs Long vs Custom with respective durations */}
         <div
           role="tablist"
           aria-label={`${activeCategory === "focus" ? "Focus" : "Break"} duration sub-tabs`}
-          className="grid grid-cols-2 p-1 rounded-lg border border-border/50 bg-muted/20 text-xs font-mono w-full max-w-sm shadow-2xs"
+          className="grid grid-cols-3 p-1 rounded-lg border border-border/50 bg-muted/20 text-xs font-mono w-full max-w-md shadow-2xs"
         >
           {activeCategory === "focus" ? (
             <>
@@ -594,7 +721,7 @@ export function FocusView({ initialData }: FocusViewProps) {
                 disabled={isTabsDisabled}
                 onClick={() => handleSelectSubMode("short_focus")}
                 className={cn(
-                  "py-1.5 px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation min-h-[32px]",
+                  "py-1.5 px-2 sm:px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1 cursor-pointer touch-manipulation min-h-[32px]",
                   currentModeKey === "short_focus"
                     ? "bg-background text-foreground font-semibold shadow-2xs border border-border/70"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
@@ -614,7 +741,7 @@ export function FocusView({ initialData }: FocusViewProps) {
                 disabled={isTabsDisabled}
                 onClick={() => handleSelectSubMode("long_focus")}
                 className={cn(
-                  "py-1.5 px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation min-h-[32px]",
+                  "py-1.5 px-2 sm:px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1 cursor-pointer touch-manipulation min-h-[32px]",
                   currentModeKey === "long_focus"
                     ? "bg-background text-foreground font-semibold shadow-2xs border border-border/70"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
@@ -624,6 +751,26 @@ export function FocusView({ initialData }: FocusViewProps) {
                 <span>Long</span>
                 <span className="text-[10px] font-normal text-muted-foreground">
                   ({POMODORO_MODES.long_focus.durationMinutes}m)
+                </span>
+              </button>
+
+              <button
+                type="button"
+                role="tab"
+                aria-selected={currentModeKey === "custom_focus"}
+                disabled={isTabsDisabled}
+                onClick={() => handleSelectSubMode("custom_focus")}
+                className={cn(
+                  "py-1.5 px-2 sm:px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1 cursor-pointer touch-manipulation min-h-[32px]",
+                  currentModeKey === "custom_focus"
+                    ? "bg-background text-foreground font-semibold shadow-2xs border border-border/70"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+                  isTabsDisabled && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                <span>Custom</span>
+                <span className="text-[10px] font-normal text-muted-foreground">
+                  ({customFocusMinutes}m)
                 </span>
               </button>
             </>
@@ -636,7 +783,7 @@ export function FocusView({ initialData }: FocusViewProps) {
                 disabled={isTabsDisabled}
                 onClick={() => handleSelectSubMode("short_break")}
                 className={cn(
-                  "py-1.5 px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation min-h-[32px]",
+                  "py-1.5 px-2 sm:px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1 cursor-pointer touch-manipulation min-h-[32px]",
                   currentModeKey === "short_break"
                     ? "bg-background text-foreground font-semibold shadow-2xs border border-border/70"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
@@ -656,7 +803,7 @@ export function FocusView({ initialData }: FocusViewProps) {
                 disabled={isTabsDisabled}
                 onClick={() => handleSelectSubMode("long_break")}
                 className={cn(
-                  "py-1.5 px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation min-h-[32px]",
+                  "py-1.5 px-2 sm:px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1 cursor-pointer touch-manipulation min-h-[32px]",
                   currentModeKey === "long_break"
                     ? "bg-background text-foreground font-semibold shadow-2xs border border-border/70"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
@@ -668,9 +815,132 @@ export function FocusView({ initialData }: FocusViewProps) {
                   ({POMODORO_MODES.long_break.durationMinutes}m)
                 </span>
               </button>
+
+              <button
+                type="button"
+                role="tab"
+                aria-selected={currentModeKey === "custom_break"}
+                disabled={isTabsDisabled}
+                onClick={() => handleSelectSubMode("custom_break")}
+                className={cn(
+                  "py-1.5 px-2 sm:px-3 rounded-md transition-all font-medium select-none text-center flex items-center justify-center gap-1 cursor-pointer touch-manipulation min-h-[32px]",
+                  currentModeKey === "custom_break"
+                    ? "bg-background text-foreground font-semibold shadow-2xs border border-border/70"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+                  isTabsDisabled && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                <span>Custom</span>
+                <span className="text-[10px] font-normal text-muted-foreground">
+                  ({customBreakMinutes}m)
+                </span>
+              </button>
             </>
           )}
         </div>
+
+        {/* Custom Duration Configurator (Visible when Custom is selected) */}
+        {((activeCategory === "focus" && currentModeKey === "custom_focus") ||
+          (activeCategory === "break" && currentModeKey === "custom_break")) && (
+          <div className="w-full max-w-md p-3 rounded-xl border border-border/70 bg-card/60 backdrop-blur-xs flex flex-col gap-2.5 animate-in fade-in-50 duration-200">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
+                <Sliders className="size-3.5 text-primary" />
+                Configure {activeCategory === "focus" ? "Focus" : "Break"} Duration
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {activeCategory === "focus" ? "1 – 180 min" : "1 – 60 min"}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2.5">
+              {/* Stepper with decrement / input / increment */}
+              <div className="flex items-center gap-1 bg-muted/40 border border-border/60 rounded-lg p-1">
+                <button
+                  type="button"
+                  aria-label="Decrease minutes"
+                  disabled={
+                    isTabsDisabled ||
+                    (activeCategory === "focus" ? customFocusMinutes <= 1 : customBreakMinutes <= 1)
+                  }
+                  onClick={() =>
+                    handleUpdateCustomMinutes(
+                      (activeCategory === "focus" ? customFocusMinutes : customBreakMinutes) - 1,
+                      activeCategory
+                    )
+                  }
+                  className="size-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/80 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                >
+                  <Minus className="size-3.5" />
+                </button>
+
+                <div className="flex items-baseline gap-0.5 px-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={activeCategory === "focus" ? 180 : 60}
+                    value={activeCategory === "focus" ? customFocusMinutes : customBreakMinutes}
+                    disabled={isTabsDisabled}
+                    onChange={(e) =>
+                      handleUpdateCustomMinutes(parseInt(e.target.value, 10), activeCategory)
+                    }
+                    className="w-12 text-center bg-transparent font-mono font-bold text-sm text-foreground focus:outline-hidden tabular-nums"
+                  />
+                  <span className="text-xs font-mono text-muted-foreground">min</span>
+                </div>
+
+                <button
+                  type="button"
+                  aria-label="Increase minutes"
+                  disabled={
+                    isTabsDisabled ||
+                    (activeCategory === "focus"
+                      ? customFocusMinutes >= 180
+                      : customBreakMinutes >= 60)
+                  }
+                  onClick={() =>
+                    handleUpdateCustomMinutes(
+                      (activeCategory === "focus" ? customFocusMinutes : customBreakMinutes) + 1,
+                      activeCategory
+                    )
+                  }
+                  className="size-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/80 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                >
+                  <Plus className="size-3.5" />
+                </button>
+              </div>
+
+              {/* Quick Preset Buttons */}
+              <div className="flex items-center gap-1 overflow-x-auto py-0.5 font-mono text-[11px]">
+                {(activeCategory === "focus"
+                  ? [15, 30, 45, 60, 90]
+                  : [3, 10, 20, 30, 45]
+                ).map((preset) => {
+                  const currentVal =
+                    activeCategory === "focus" ? customFocusMinutes : customBreakMinutes
+                  const isSelected = currentVal === preset
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      disabled={isTabsDisabled}
+                      onClick={() => handleUpdateCustomMinutes(preset, activeCategory)}
+                      className={cn(
+                        "px-2 py-1 rounded-md transition-all cursor-pointer font-medium touch-manipulation",
+                        isSelected
+                          ? "bg-foreground text-background font-bold shadow-2xs"
+                          : "bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted/70",
+                        isTabsDisabled && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      {preset}m
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Timer Card */}
@@ -718,7 +988,13 @@ export function FocusView({ initialData }: FocusViewProps) {
               className="gap-2 font-mono text-xs px-8 cursor-pointer shadow-xs"
             >
               <Play className="size-4 fill-current" />
-              <span>Start {POMODORO_MODES[selectedMode].label}</span>
+              <span>
+                {selectedMode === "custom_focus"
+                  ? `Start Custom Focus (${customFocusMinutes}m)`
+                  : selectedMode === "custom_break"
+                  ? `Start Custom Break (${customBreakMinutes}m)`
+                  : `Start ${POMODORO_MODES[selectedMode].label}`}
+              </span>
             </Button>
           )}
 

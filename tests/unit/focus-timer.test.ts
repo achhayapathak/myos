@@ -239,18 +239,24 @@ describe("Focus Timer Calculations (Timestamp Source of Truth)", () => {
     it("derives PomodoroMode distinctly for 25m and 50m focus and breaks", () => {
       expect(derivePomodoroMode("focus", 25 * 60)).toBe("short_focus")
       expect(derivePomodoroMode("focus", 50 * 60)).toBe("long_focus")
+      expect(derivePomodoroMode("focus", 45 * 60)).toBe("custom_focus")
       expect(derivePomodoroMode("short_break", 5 * 60)).toBe("short_break")
+      expect(derivePomodoroMode("short_break", 10 * 60)).toBe("custom_break")
       expect(derivePomodoroMode("long_break", 15 * 60)).toBe("long_break")
+      expect(derivePomodoroMode("long_break", 20 * 60)).toBe("custom_break")
     })
 
-    it("formats distinct labels for short and long focus and break sessions", () => {
+    it("formats distinct labels for short, long, and custom focus and break sessions", () => {
       expect(formatSessionLabel("focus", 25 * 60)).toBe("Short Focus (25m)")
       expect(formatSessionLabel("focus", 50 * 60)).toBe("Long Focus (50m)")
+      expect(formatSessionLabel("focus", 45 * 60)).toBe("Custom Focus (45m)")
       expect(formatSessionLabel("short_break", 5 * 60)).toBe("Short Break (5m)")
+      expect(formatSessionLabel("short_break", 10 * 60)).toBe("Custom Break (10m)")
       expect(formatSessionLabel("long_break", 15 * 60)).toBe("Long Break (15m)")
+      expect(formatSessionLabel("long_break", 20 * 60)).toBe("Custom Break (20m)")
     })
 
-    it("configures all 4 modes in POMODORO_MODES metadata", () => {
+    it("configures all modes in POMODORO_MODES metadata", () => {
       expect(POMODORO_MODES.short_focus.durationMinutes).toBe(25)
       expect(POMODORO_MODES.short_focus.durationSeconds).toBe(1500)
       expect(POMODORO_MODES.short_focus.label).toBe("Short Focus")
@@ -259,6 +265,8 @@ describe("Focus Timer Calculations (Timestamp Source of Truth)", () => {
       expect(POMODORO_MODES.long_focus.durationSeconds).toBe(3000)
       expect(POMODORO_MODES.long_focus.label).toBe("Long Focus")
 
+      expect(POMODORO_MODES.custom_focus.label).toBe("Custom Focus")
+
       expect(POMODORO_MODES.short_break.durationMinutes).toBe(5)
       expect(POMODORO_MODES.short_break.durationSeconds).toBe(300)
       expect(POMODORO_MODES.short_break.label).toBe("Short Break")
@@ -266,6 +274,8 @@ describe("Focus Timer Calculations (Timestamp Source of Truth)", () => {
       expect(POMODORO_MODES.long_break.durationMinutes).toBe(15)
       expect(POMODORO_MODES.long_break.durationSeconds).toBe(900)
       expect(POMODORO_MODES.long_break.label).toBe("Long Break")
+
+      expect(POMODORO_MODES.custom_break.label).toBe("Custom Break")
 
       expect(MODE_DURATIONS.short_focus).toBe(1500)
       expect(MODE_DURATIONS.long_focus).toBe(3000)

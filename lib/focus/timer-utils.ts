@@ -11,8 +11,10 @@ export type PomodoroState =
 export type PomodoroMode =
   | "short_focus"
   | "long_focus"
+  | "custom_focus"
   | "short_break"
   | "long_break"
+  | "custom_break"
 
 export const DEFAULT_DURATIONS: Record<PomodoroType, number> = {
   focus: 25 * 60, // 25 minutes = 1500 seconds
@@ -23,8 +25,10 @@ export const DEFAULT_DURATIONS: Record<PomodoroType, number> = {
 export const MODE_DURATIONS: Record<PomodoroMode, number> = {
   short_focus: 25 * 60, // 25 minutes = 1500 seconds
   long_focus: 50 * 60, // 50 minutes = 3000 seconds
+  custom_focus: 25 * 60, // Default fallback
   short_break: 5 * 60, // 5 minutes = 300 seconds
   long_break: 15 * 60, // 15 minutes = 900 seconds
+  custom_break: 5 * 60, // Default fallback
 }
 
 export interface PomodoroModeConfig {
@@ -56,6 +60,15 @@ export const POMODORO_MODES: Record<PomodoroMode, PomodoroModeConfig> = {
     badgeLabel: "Long Focus",
     description: "50 minutes of deep focus",
   },
+  custom_focus: {
+    mode: "custom_focus",
+    type: "focus",
+    label: "Custom Focus",
+    durationMinutes: 25,
+    durationSeconds: 25 * 60,
+    badgeLabel: "Custom Focus",
+    description: "Custom deep focus session",
+  },
   short_break: {
     mode: "short_break",
     type: "short_break",
@@ -74,6 +87,15 @@ export const POMODORO_MODES: Record<PomodoroMode, PomodoroModeConfig> = {
     badgeLabel: "Long Break",
     description: "15 minutes to rest & recover",
   },
+  custom_break: {
+    mode: "custom_break",
+    type: "short_break",
+    label: "Custom Break",
+    durationMinutes: 5,
+    durationSeconds: 5 * 60,
+    badgeLabel: "Custom Break",
+    description: "Custom break duration",
+  },
 }
 
 /**
@@ -83,10 +105,22 @@ export function derivePomodoroMode(
   type: PomodoroType,
   durationSeconds?: number
 ): PomodoroMode {
-  if (type === "short_break") return "short_break"
-  if (type === "long_break") return "long_break"
-  if (durationSeconds && durationSeconds >= 45 * 60) {
-    return "long_focus"
+  if (type === "short_break") {
+    if (durationSeconds && durationSeconds !== 5 * 60) {
+      return "custom_break"
+    }
+    return "short_break"
+  }
+  if (type === "long_break") {
+    if (durationSeconds && durationSeconds !== 15 * 60) {
+      return "custom_break"
+    }
+    return "long_break"
+  }
+  if (durationSeconds) {
+    if (durationSeconds === 25 * 60) return "short_focus"
+    if (durationSeconds === 50 * 60) return "long_focus"
+    return "custom_focus"
   }
   return "short_focus"
 }
@@ -98,15 +132,25 @@ export function formatSessionLabel(
   type: PomodoroType,
   durationSeconds?: number
 ): string {
+  const mins = durationSeconds
+    ? Math.round(durationSeconds / 60)
+    : type === "focus"
+    ? 25
+    : type === "short_break"
+    ? 5
+    : 15
+
   if (type === "focus") {
-    return durationSeconds && durationSeconds >= 45 * 60
-      ? "Long Focus (50m)"
-      : "Short Focus (25m)"
+    if (mins === 25) return "Short Focus (25m)"
+    if (mins === 50) return "Long Focus (50m)"
+    return `Custom Focus (${mins}m)`
   }
   if (type === "short_break") {
-    return "Short Break (5m)"
+    if (mins === 5) return "Short Break (5m)"
+    return `Custom Break (${mins}m)`
   }
-  return "Long Break (15m)"
+  if (mins === 15) return "Long Break (15m)"
+  return `Custom Break (${mins}m)`
 }
 
 /**

@@ -43,7 +43,19 @@ export function PomodoroTimerDisplay({
   const isComplete = state === "FOCUS_COMPLETE" || state === "BREAK_COMPLETE"
   const isActive = state === "FOCUSING" || state === "SHORT_BREAK"
   const isPaused = state === "PAUSED"
-  const isLongFocus = type === "focus" && durationSeconds >= 45 * 60
+  const sessionMinutes = Math.round(durationSeconds / 60)
+
+  const baseTitle = isBreak
+    ? sessionMinutes === 5
+      ? "Short Break"
+      : sessionMinutes === 15
+      ? "Long Break"
+      : `Custom Break (${sessionMinutes}m)`
+    : sessionMinutes === 25
+    ? "Short Focus"
+    : sessionMinutes === 50
+    ? "Long Focus"
+    : `Custom Focus (${sessionMinutes}m)`
 
   return (
     <div className="relative flex flex-col items-center justify-center py-6 select-none">
@@ -99,18 +111,12 @@ export function PomodoroTimerDisplay({
             )}
             <span>
               {isPaused
-                ? `${isBreak ? (type === "short_break" ? "Short Break" : "Long Break") : isLongFocus ? "Long Focus" : "Short Focus"} (Paused)`
+                ? `${baseTitle} (Paused)`
                 : state === "FOCUS_COMPLETE"
                 ? "Focus Complete"
                 : state === "BREAK_COMPLETE"
                 ? "Break Complete"
-                : isBreak
-                ? type === "short_break"
-                  ? "Short Break"
-                  : "Long Break"
-                : isLongFocus
-                ? "Long Focus"
-                : "Short Focus"}
+                : baseTitle}
             </span>
           </div>
 
@@ -136,12 +142,16 @@ export function PomodoroTimerDisplay({
               ? "Paused • Click Resume to continue"
               : state === "IDLE"
               ? isBreak
-                ? type === "short_break"
+                ? sessionMinutes === 5
                   ? "5m quick recharge"
-                  : "15m recovery break"
-                : isLongFocus
+                  : sessionMinutes === 15
+                  ? "15m recovery break"
+                  : `${sessionMinutes}m custom break`
+                : sessionMinutes === 25
+                ? "25m deep focus session"
+                : sessionMinutes === 50
                 ? "50m deep focus session"
-                : "25m deep focus session"
+                : `${sessionMinutes}m deep focus session`
               : state === "FOCUSING"
               ? taskTitle ? `Task: ${taskTitle}` : "Focusing without distraction"
               : state === "SHORT_BREAK"

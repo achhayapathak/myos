@@ -13,7 +13,15 @@ export const pomodoroTypeSchema = z.enum([
 
 export const startSessionSchema = z.object({
   type: z
-    .enum(["focus", "short_break", "long_break", "short_focus", "long_focus"])
+    .enum([
+      "focus",
+      "short_break",
+      "long_break",
+      "short_focus",
+      "long_focus",
+      "custom_focus",
+      "custom_break",
+    ])
     .default("focus"),
   duration_seconds: z
     .number()
@@ -37,12 +45,19 @@ export const startSessionSchema = z.object({
   } else if (data.type === "short_focus") {
     normalizedType = "focus"
     defaultDuration = 25 * 60
+  } else if (data.type === "custom_focus") {
+    normalizedType = "focus"
+    defaultDuration = data.duration_seconds || 25 * 60
   } else if (data.type === "short_break") {
     normalizedType = "short_break"
     defaultDuration = DEFAULT_DURATIONS.short_break
   } else if (data.type === "long_break") {
     normalizedType = "long_break"
     defaultDuration = DEFAULT_DURATIONS.long_break
+  } else if (data.type === "custom_break") {
+    normalizedType =
+      data.duration_seconds && data.duration_seconds > 5 * 60 ? "long_break" : "short_break"
+    defaultDuration = data.duration_seconds || DEFAULT_DURATIONS.short_break
   }
 
   return {

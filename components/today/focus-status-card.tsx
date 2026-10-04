@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Timer, Play, Flame, CheckCircle, Radio } from "lucide-react"
+import { Timer, Play, Pause, Flame, CheckCircle, Radio } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -11,6 +11,7 @@ interface FocusStatusCardProps {
 
 export function FocusStatusCard({ summary }: FocusStatusCardProps) {
   const { activeSession, completedSessionsToday, totalFocusMinutesToday } = summary
+  const isPaused = Boolean(activeSession?.paused_at)
 
   return (
     <div className="rounded-xl border border-border/70 bg-card p-5 shadow-xs flex flex-col justify-between">
@@ -23,13 +24,23 @@ export function FocusStatusCard({ summary }: FocusStatusCardProps) {
             </h2>
           </div>
           {activeSession ? (
-            <Badge
-              variant="default"
-              className="text-[10px] font-mono h-4.5 px-2 bg-emerald-600 gap-1 animate-pulse"
-            >
-              <Radio className="size-2.5" />
-              <span>In Focus</span>
-            </Badge>
+            isPaused ? (
+              <Badge
+                variant="outline"
+                className="text-[10px] font-mono h-4.5 px-2 text-amber-500 border-amber-500/40 bg-amber-500/10 gap-1"
+              >
+                <Pause className="size-2.5" />
+                <span>Paused</span>
+              </Badge>
+            ) : (
+              <Badge
+                variant="default"
+                className="text-[10px] font-mono h-4.5 px-2 bg-emerald-600 gap-1 animate-pulse"
+              >
+                <Radio className="size-2.5" />
+                <span>In Focus</span>
+              </Badge>
+            )
           ) : (
             <Badge variant="outline" className="text-[10px] font-mono h-4.5 px-1.5">
               Ready
@@ -45,11 +56,11 @@ export function FocusStatusCard({ summary }: FocusStatusCardProps) {
             <p className="text-xs font-medium text-foreground mt-1.5">
               {activeSession.type === "focus"
                 ? activeSession.duration_seconds >= 45 * 60
-                  ? "Active Long Focus (50m)"
-                  : "Active Short Focus (25m)"
+                  ? isPaused ? "Paused Long Focus (50m)" : "Active Long Focus (50m)"
+                  : isPaused ? "Paused Short Focus (25m)" : "Active Short Focus (25m)"
                 : activeSession.type === "short_break"
-                ? "Active Short Break (5m)"
-                : "Active Long Break (15m)"}
+                ? isPaused ? "Paused Short Break (5m)" : "Active Short Break (5m)"
+                : isPaused ? "Paused Long Break (15m)" : "Active Long Break (15m)"}
             </p>
             {activeSession.task_title && (
               <p className="text-[11px] font-mono text-muted-foreground mt-0.5 truncate max-w-[220px]">
@@ -105,7 +116,13 @@ export function FocusStatusCard({ summary }: FocusStatusCardProps) {
           )}
         >
           <Play className="size-3.5 fill-current" />
-          <span>{activeSession ? "Resume Focus Session" : "Start Focus Session"}</span>
+          <span>
+            {activeSession
+              ? isPaused
+                ? "Resume Paused Session"
+                : "Resume Focus Session"
+              : "Start Focus Session"}
+          </span>
         </Link>
         <span className="text-[10px] font-mono text-center text-muted-foreground/60">
           Press ⌥3 to jump to timer

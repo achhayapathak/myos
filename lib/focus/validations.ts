@@ -64,5 +64,24 @@ export const cancelSessionSchema = z.object({
   id: z.string().regex(uuidPattern, "Invalid session ID format."),
 })
 
+export const pauseSessionSchema = z.object({
+  id: z.string().regex(uuidPattern, "Invalid session ID format."),
+  remaining_seconds: z
+    .number()
+    .int()
+    .positive("Remaining seconds must be greater than zero.")
+    .optional(),
+})
+
+export const resumeSessionSchema = z.object({
+  id: z.string().regex(uuidPattern, "Invalid session ID format."),
+  remaining_seconds: z
+    .number()
+    .int()
+    .positive("Remaining seconds must be greater than zero."),
+})
+
 export type StartSessionInput = z.infer<typeof startSessionSchema>
 export type CompleteSessionInput = z.infer<typeof completeSessionSchema>
+export type PauseSessionInput = z.infer<typeof pauseSessionSchema>
+export type ResumeSessionInput = z.infer<typeof resumeSessionSchema>

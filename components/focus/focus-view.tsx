@@ -10,6 +10,7 @@ import {
   X,
   Radio,
   Timer,
+  Pause,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { PomodoroType, PomodoroSession } from "@/types/database"
@@ -27,6 +28,8 @@ import {
   completePomodoroSession,
   cancelPomodoroSession,
   associateTaskWithSession,
+  pausePomodoroSession,
+  resumePomodoroSession,
 } from "@/app/(app)/focus/actions"
 import { toggleTaskStatus } from "@/app/(app)/tasks/actions"
 import { PomodoroTimerDisplay } from "./pomodoro-timer-display"
@@ -98,10 +101,35 @@ export function FocusView({ initialData }: FocusViewProps) {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [isActionPending, startTransition] = React.useTransition()
 
-  const isSessionRunning = Boolean(activeSession && !activeSession.ended_at)
+  // Track remaining seconds when the session is paused
+  const [pausedSeconds, setPausedSeconds] = React.useState<number | null>(() => {
+    if (typeof window !== "undefined" && initialData.activeSession) {
+      try {
+        const stored = localStorage.getItem(`myos_focus_paused_${initialData.activeSession.id}`)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (typeof parsed.remainingSeconds === "number") {
+            return parsed.remainingSeconds
+          }
+        }
+      } catch {
+        // Ignore localStorage error
+      }
+    }
+    return initialData.activeSession?.paused_at
+      ? calculateRemainingSeconds(
+          initialData.activeSession.started_at,
+          initialData.activeSession.duration_seconds,
+          new Date(initialData.activeSession.paused_at).getTime()
+        )
+      : null
+  })
 
-  // Subscribes to time ticks only when a session is active.
-  // When idle, no timer is created, eliminating unnecessary React re-renders.
+  const isPaused = pausedSeconds !== null
+  const isSessionRunning = Boolean(activeSession && !activeSession.ended_at && !isPaused)
+
+  // Subscribes to time ticks only when a session is active and not paused.
+  // When idle or paused, no timer is created, eliminating unnecessary React re-renders.
   const [currentTime, setCurrentTime] = React.useState<number>(0)
 
   React.useEffect(() => {
@@ -140,13 +168,6 @@ export function FocusView({ initialData }: FocusViewProps) {
 
   // Determine current Pomodoro state and remaining seconds strictly from timestamps
   const { state, remainingSeconds, isDone } = React.useMemo(() => {
-    const effectiveNow =
-      currentTime > 0
-        ? currentTime
-        : activeSession
-        ? new Date(activeSession.started_at).getTime()
-        : 0
-
     if (!activeSession) {
       return {
         state: "IDLE" as PomodoroState,
@@ -154,6 +175,20 @@ export function FocusView({ initialData }: FocusViewProps) {
         isDone: false,
       }
     }
+
+    // Freeze display time and progress when paused
+    if (isPaused && pausedSeconds !== null) {
+      return {
+        state: "PAUSED" as PomodoroState,
+        remainingSeconds: pausedSeconds,
+        isDone: false,
+      }
+    }
+
+    const effectiveNow =
+      currentTime > 0
+        ? currentTime
+        : new Date(activeSession.started_at).getTime()
 
     const remaining = calculateRemainingSeconds(
       activeSession.started_at,
@@ -180,7 +215,7 @@ export function FocusView({ initialData }: FocusViewProps) {
       remainingSeconds: remaining,
       isDone: completed,
     }
-  }, [activeSession, currentTime, selectedMode])
+  }, [activeSession, currentTime, selectedMode, isPaused, pausedSeconds])
 
   // Track if completion was already persisted to avoid duplicate network calls
   const completionHandledRef = React.useRef<string | null>(null)
@@ -193,6 +228,15 @@ export function FocusView({ initialData }: FocusViewProps) {
 
     completionHandledRef.current = activeSession.id
     playChime()
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(`myos_focus_paused_${activeSession.id}`)
+      } catch {
+        // Ignore
+      }
+    }
+    setPausedSeconds(null)
 
     const finishedSession: PomodoroSession & { task_title?: string | null } = {
       ...activeSession,
@@ -222,6 +266,7 @@ export function FocusView({ initialData }: FocusViewProps) {
 
       const config = POMODORO_MODES[modeToStart]
       setSelectedMode(modeToStart)
+      setPausedSeconds(null)
 
       startTransition(async () => {
         try {
@@ -252,6 +297,68 @@ export function FocusView({ initialData }: FocusViewProps) {
     },
     [initialData.availableTasks, selectedTaskId, selectedMode]
   )
+
+  // Pause Session
+  const handlePauseSession = React.useCallback(() => {
+    if (!activeSession || isPaused) return
+    const currentRemaining = remainingSeconds
+    setPausedSeconds(currentRemaining)
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(
+          `myos_focus_paused_${activeSession.id}`,
+          JSON.stringify({
+            id: activeSession.id,
+            remainingSeconds: currentRemaining,
+            pausedAt: Date.now(),
+          })
+        )
+      } catch {
+        // Ignore localStorage error
+      }
+    }
+
+    startTransition(async () => {
+      try {
+        await pausePomodoroSession({
+          id: activeSession.id,
+          remaining_seconds: currentRemaining,
+        })
+      } catch {
+        // Offline or background network failure handled gracefully
+      }
+    })
+  }, [activeSession, isPaused, remainingSeconds])
+
+  // Resume Session
+  const handleResumeSession = React.useCallback(() => {
+    if (!activeSession || !isPaused) return
+    const rem = pausedSeconds ?? remainingSeconds
+    setPausedSeconds(null)
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(`myos_focus_paused_${activeSession.id}`)
+      } catch {
+        // Ignore
+      }
+    }
+
+    startTransition(async () => {
+      try {
+        const res = await resumePomodoroSession({
+          id: activeSession.id,
+          remaining_seconds: rem,
+        })
+        if (res.success && res.data) {
+          setActiveSession((prev) => (prev ? { ...prev, ...res.data } : null))
+        }
+      } catch {
+        // Network error handling
+      }
+    })
+  }, [activeSession, isPaused, pausedSeconds, remainingSeconds])
 
   // Command palette and deep link listener for starting focus
   React.useEffect(() => {
@@ -287,6 +394,14 @@ export function FocusView({ initialData }: FocusViewProps) {
     if (!activeSession) return
 
     const sessionId = activeSession.id
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(`myos_focus_paused_${sessionId}`)
+      } catch {
+        // Ignore
+      }
+    }
+    setPausedSeconds(null)
     setActiveSession(null)
 
     startTransition(async () => {
@@ -333,6 +448,8 @@ export function FocusView({ initialData }: FocusViewProps) {
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/80 bg-muted/40 font-mono text-xs text-muted-foreground mb-2">
           {state === "FOCUSING" || state === "SHORT_BREAK" ? (
             <Radio className="size-3 text-emerald-500 animate-pulse" />
+          ) : state === "PAUSED" ? (
+            <Pause className="size-3 text-amber-500" />
           ) : (
             <Timer className="size-5 text-amber-500" />
           )}
@@ -377,7 +494,7 @@ export function FocusView({ initialData }: FocusViewProps) {
             <button
               key={modeKey}
               type="button"
-              disabled={state === "FOCUSING" || state === "SHORT_BREAK"}
+              disabled={state === "FOCUSING" || state === "SHORT_BREAK" || state === "PAUSED"}
               onClick={() => {
                 setSelectedMode(modeKey)
                 setActiveSession(null)
@@ -387,7 +504,8 @@ export function FocusView({ initialData }: FocusViewProps) {
                 isSelected || isCurrentRunning
                   ? "bg-foreground text-background font-semibold shadow-xs"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                (state === "FOCUSING" || state === "SHORT_BREAK") && "opacity-60 cursor-not-allowed"
+                (state === "FOCUSING" || state === "SHORT_BREAK" || state === "PAUSED") &&
+                  "opacity-60 cursor-not-allowed"
               )}
             >
               <span>{config.label}</span>
@@ -415,7 +533,7 @@ export function FocusView({ initialData }: FocusViewProps) {
               availableTasks={initialData.availableTasks}
               selectedTaskId={selectedTaskId}
               onSelectTask={handleTaskSelect}
-              disabled={state === "FOCUSING"}
+              disabled={state === "FOCUSING" || state === "PAUSED"}
             />
 
             {/* Quick Complete Task Button if active */}
@@ -447,16 +565,52 @@ export function FocusView({ initialData }: FocusViewProps) {
           )}
 
           {(state === "FOCUSING" || state === "SHORT_BREAK") && (
-            <Button
-              variant="outline"
-              size="lg"
-              disabled={isActionPending}
-              onClick={handleResetSession}
-              className="gap-2 font-mono text-xs cursor-pointer text-destructive hover:bg-destructive/10 hover:border-destructive/30"
-            >
-              <RotateCcw className="size-4" />
-              <span>Stop Session</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="lg"
+                variant="secondary"
+                disabled={isActionPending}
+                onClick={handlePauseSession}
+                className="gap-2 font-mono text-xs cursor-pointer shadow-xs border border-border/60 hover:bg-muted"
+              >
+                <Pause className="size-4" />
+                <span>Pause</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                disabled={isActionPending}
+                onClick={handleResetSession}
+                className="gap-2 font-mono text-xs cursor-pointer text-destructive hover:bg-destructive/10 hover:border-destructive/30"
+              >
+                <RotateCcw className="size-4" />
+                <span>Stop Session</span>
+              </Button>
+            </div>
+          )}
+
+          {state === "PAUSED" && (
+            <div className="flex items-center gap-2 animate-in fade-in-0">
+              <Button
+                size="lg"
+                disabled={isActionPending}
+                onClick={handleResumeSession}
+                className="gap-2 font-mono text-xs px-6 cursor-pointer shadow-xs bg-amber-600 hover:bg-amber-500 text-white"
+              >
+                <Play className="size-4 fill-current" />
+                <span>Resume {selectedType === "focus" ? "Focus" : "Break"}</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                disabled={isActionPending}
+                onClick={handleResetSession}
+                className="gap-2 font-mono text-xs cursor-pointer text-destructive hover:bg-destructive/10 hover:border-destructive/30"
+              >
+                <RotateCcw className="size-4" />
+                <span>Stop Session</span>
+              </Button>
+            </div>
           )}
 
           {state === "FOCUS_COMPLETE" && (

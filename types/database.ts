@@ -151,6 +151,7 @@ export type PomodoroSession = {
   duration_seconds: number
   started_at: string
   ended_at: string | null
+  paused_at?: string | null
   task_id: string | null
   created_at: string
   updated_at: string
@@ -163,6 +164,7 @@ export type PomodoroSessionInsert = {
   duration_seconds: number
   started_at?: string
   ended_at?: string | null
+  paused_at?: string | null
   task_id?: string | null
   created_at?: string
   updated_at?: string
@@ -175,6 +177,7 @@ export type PomodoroSessionUpdate = {
   duration_seconds?: number
   started_at?: string
   ended_at?: string | null
+  paused_at?: string | null
   task_id?: string | null
   created_at?: string
   updated_at?: string

@@ -19,6 +19,8 @@ All migrations are designed to be **idempotent** (`IF NOT EXISTS`, `OR REPLACE`)
 | **3** | `20261003000000_notification_deliveries.sql` | Creates `notification_deliveries` queue table, RLS policies, status constraints, and partial index on pending deliveries. |
 | **4** | `20261003000001_search_indexes.sql` | Enables PostgreSQL `pg_trgm` extension and creates GIN trigram indexes on task titles/descriptions, note titles/contents, and event titles/descriptions. |
 | **5** | `20261003000002_performance_indexes.sql` | Adds composite and partial indexes for hot paths: `(user_id, status, due_at)`, `(user_id, priority, status)`, `(user_id, completed, remind_at)`, and active Pomodoro sessions (`WHERE ended_at IS NULL`). |
+| **6** | `20261004000000_habits.sql` | Creates `habits` and `habit_completions` tables with RLS policies, indexes, and cascades. |
+| **7** | `20261004000001_pomodoro_pause.sql` | Adds `paused_at` column to `pomodoro_sessions` for pause and resume tracking. |
 
 ---
 

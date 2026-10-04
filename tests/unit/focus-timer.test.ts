@@ -11,6 +11,7 @@ import {
   MODE_DURATIONS,
   derivePomodoroMode,
   formatSessionLabel,
+  calculateResumeStartedAt,
 } from "@/lib/focus/timer-utils"
 
 describe("Focus Timer Calculations (Timestamp Source of Truth)", () => {
@@ -272,4 +273,54 @@ describe("Focus Timer Calculations (Timestamp Source of Truth)", () => {
       expect(MODE_DURATIONS.long_break).toBe(900)
     })
   })
+
+  describe("8. Pause & Resume Mechanics", () => {
+    it("freezes timer in PAUSED state based on paused_at timestamp", () => {
+      // 25 min (1500s) session started at baseStart
+      // Paused 5 minutes (300s) in => remaining should be 1200s
+      const pausedAt = new Date(baseStartMs + 300 * 1000).toISOString()
+      const pausedSession = {
+        type: "focus" as const,
+        started_at: baseStart,
+        duration_seconds: focusDuration,
+        ended_at: null,
+        paused_at: pausedAt,
+      }
+
+      // Even if current time is 2 hours later, remaining seconds is frozen at 1200
+      const twoHoursLater = baseStartMs + 7200 * 1000
+      const state = derivePomodoroState(pausedSession, twoHoursLater)
+
+      expect(state.state).toBe("PAUSED")
+      expect(state.remainingSeconds).toBe(1200)
+      expect(state.progress).toBeCloseTo(300 / 1500, 2)
+      expect(state.isCompleted).toBe(false)
+    })
+
+    it("calculates accurate resume started_at timestamp preserving remaining seconds", () => {
+      // 50m (3000s) session paused with 1800s remaining
+      const longDuration = 3000
+      const remainingSeconds = 1800
+      const resumeNowMs = baseStartMs + 10000 * 1000 // resumed hours later
+
+      const newStartedAtIso = calculateResumeStartedAt(longDuration, remainingSeconds, resumeNowMs)
+
+      // Elapsed seconds when resuming should be duration - remaining = 1200s (20m)
+      const expectedNewStartMs = resumeNowMs - 1200 * 1000
+      expect(new Date(newStartedAtIso).getTime()).toBe(expectedNewStartMs)
+
+      // When calculateRemainingSeconds is immediately evaluated, it must match 1800s
+      const calculatedRemaining = calculateRemainingSeconds(newStartedAtIso, longDuration, resumeNowMs)
+      expect(calculatedRemaining).toBe(remainingSeconds)
+    })
+
+    it("handles resuming when remainingSeconds equals full duration", () => {
+      const resumeNowMs = Date.now()
+      const newStartedAtIso = calculateResumeStartedAt(1500, 1500, resumeNowMs)
+
+      expect(new Date(newStartedAtIso).getTime()).toBe(resumeNowMs)
+      expect(calculateRemainingSeconds(newStartedAtIso, 1500, resumeNowMs)).toBe(1500)
+    })
+  })
 })
+

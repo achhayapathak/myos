@@ -5,6 +5,7 @@ import {
   Coffee,
   CheckCircle2,
   Zap,
+  Pause,
 } from "lucide-react"
 import type { PomodoroType } from "@/types/database"
 import type { PomodoroState } from "@/lib/focus/timer-utils"
@@ -41,6 +42,7 @@ export function PomodoroTimerDisplay({
   const isBreak = type === "short_break" || type === "long_break"
   const isComplete = state === "FOCUS_COMPLETE" || state === "BREAK_COMPLETE"
   const isActive = state === "FOCUSING" || state === "SHORT_BREAK"
+  const isPaused = state === "PAUSED"
   const isLongFocus = type === "focus" && durationSeconds >= 45 * 60
 
   return (
@@ -69,6 +71,8 @@ export function PomodoroTimerDisplay({
               "fill-none transition-all duration-300 ease-out",
               isComplete
                 ? "stroke-emerald-500"
+                : isPaused
+                ? "stroke-amber-500/80"
                 : isBreak
                 ? "stroke-sky-500"
                 : "stroke-primary"
@@ -86,13 +90,17 @@ export function PomodoroTimerDisplay({
           <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-mono text-muted-foreground uppercase tracking-widest mb-1">
             {isComplete ? (
               <CheckCircle2 className="size-3.5 text-emerald-500" />
+            ) : isPaused ? (
+              <Pause className="size-3.5 text-amber-500" />
             ) : isBreak ? (
               <Coffee className="size-3.5 text-sky-500" />
             ) : (
               <Zap className="size-3.5 text-amber-500" />
             )}
             <span>
-              {state === "FOCUS_COMPLETE"
+              {isPaused
+                ? `${isBreak ? (type === "short_break" ? "Short Break" : "Long Break") : isLongFocus ? "Long Focus" : "Short Focus"} (Paused)`
+                : state === "FOCUS_COMPLETE"
                 ? "Focus Complete"
                 : state === "BREAK_COMPLETE"
                 ? "Break Complete"
@@ -112,6 +120,8 @@ export function PomodoroTimerDisplay({
               "text-4xl xs:text-5xl sm:text-6xl font-mono font-bold tracking-tighter tabular-nums transition-colors",
               isComplete
                 ? "text-emerald-500"
+                : isPaused
+                ? "text-amber-500"
                 : isActive
                 ? "text-foreground"
                 : "text-foreground/90"
@@ -122,7 +132,9 @@ export function PomodoroTimerDisplay({
 
           {/* Helper Subtext */}
           <p className="text-[11px] font-mono text-muted-foreground mt-2 max-w-[200px] truncate">
-            {state === "IDLE"
+            {isPaused
+              ? "Paused • Click Resume to continue"
+              : state === "IDLE"
               ? isBreak
                 ? type === "short_break"
                   ? "5m quick recharge"

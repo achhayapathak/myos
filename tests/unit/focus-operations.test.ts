@@ -11,13 +11,22 @@ const mockSingle = vi.fn()
 const mockRevalidatePath = vi.fn()
 
 const eqCalls: [string, unknown][] = []
+const updateCalls: unknown[] = []
 const mockEq = vi.fn((column: string, value: unknown) => {
   eqCalls.push([column, value])
   return {
     eq: mockEq,
-    is: vi.fn().mockResolvedValue({ error: null }),
+    is: vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: mockSingle.mockResolvedValue({ data: mockSession, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: mockSession, error: null }),
+      })),
+      single: mockSingle.mockResolvedValue({ data: mockSession, error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: mockSession, error: null }),
+    })),
     select: vi.fn(() => ({
       single: mockSingle.mockResolvedValue({ data: mockSession, error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: mockSession, error: null }),
     })),
   }
 })
@@ -28,9 +37,10 @@ const mockSupabase = {
   },
   from: vi.fn(() => ({
     insert: mockInsert,
-    update: vi.fn(() => ({
-      eq: mockEq,
-    })),
+    update: vi.fn((payload) => {
+      updateCalls.push(payload)
+      return { eq: mockEq }
+    }),
     delete: vi.fn(() => ({
       eq: mockEq,
     })),
@@ -69,6 +79,7 @@ describe("Focus / Pomodoro Server Actions & Security Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     eqCalls.length = 0
+    updateCalls.length = 0
     mockGetUser.mockResolvedValue({
       data: { user: mockUser },
       error: null,
@@ -84,7 +95,13 @@ describe("Focus / Pomodoro Server Actions & Security Tests", () => {
     const deepEqChain: Record<string, unknown> = {
       maybeSingle: maybySingleResolved,
       single: mockSingle.mockResolvedValue({ data: mockSession, error: null }),
-      is: vi.fn().mockResolvedValue({ error: null }),
+      is: vi.fn(() => ({
+        single: mockSingle.mockResolvedValue({ data: mockSession, error: null }),
+        maybeSingle: maybySingleResolved,
+        order: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: mockSession, error: null }),
+        }),
+      })),
       order: vi.fn().mockResolvedValue({ data: [], error: null }),
     }
     deepEqChain.eq = vi.fn().mockReturnValue(deepEqChain)
@@ -273,7 +290,86 @@ describe("Focus / Pomodoro Server Actions & Security Tests", () => {
     })
   })
 
-  describe("5. Multi-User Isolation & Anti-Cross-User Access", () => {
+  describe("5. pausePomodoroSession and resumePomodoroSession", () => {
+    it("pauses active session by updating paused_at timestamp with user_id authorization", async () => {
+      const { pausePomodoroSession } = await import("@/app/(app)/focus/actions")
+
+      const sessionId = "00000000-0000-0000-0000-000000000001"
+      const res = await pausePomodoroSession(sessionId)
+
+      expect(res.success).toBe(true)
+      expect(eqCalls).toContainEqual(["id", sessionId])
+      expect(eqCalls).toContainEqual(["user_id", "user-12345"])
+      expect(updateCalls).toContainEqual(
+        expect.objectContaining({
+          paused_at: expect.any(String),
+        })
+      )
+      expect(mockRevalidatePath).toHaveBeenCalledWith("/focus")
+      expect(mockRevalidatePath).toHaveBeenCalledWith("/today")
+    })
+
+    it("resumes paused session by updating started_at and clearing paused_at", async () => {
+      const { resumePomodoroSession } = await import("@/app/(app)/focus/actions")
+
+      const sessionId = "00000000-0000-0000-0000-000000000001"
+      const res = await resumePomodoroSession({
+        id: sessionId,
+        remaining_seconds: 900,
+      })
+
+      expect(res.success).toBe(true)
+      expect(eqCalls).toContainEqual(["id", sessionId])
+      expect(eqCalls).toContainEqual(["user_id", "user-12345"])
+      expect(updateCalls).toContainEqual(
+        expect.objectContaining({
+          started_at: expect.any(String),
+          paused_at: null,
+        })
+      )
+      expect(mockRevalidatePath).toHaveBeenCalledWith("/focus")
+      expect(mockRevalidatePath).toHaveBeenCalledWith("/today")
+    })
+
+    it("rejects invalid input when resuming session", async () => {
+      const { resumePomodoroSession } = await import("@/app/(app)/focus/actions")
+
+      const res = await resumePomodoroSession({
+        id: "invalid-uuid",
+        remaining_seconds: -10,
+      })
+
+      expect(res.success).toBe(false)
+      expect(res.error).toBeDefined()
+    })
+
+    it("blocks unauthenticated users from pausing or resuming sessions", async () => {
+      mockGetUser.mockResolvedValueOnce({
+        data: { user: null },
+        error: new Error("No session"),
+      })
+
+      const { pausePomodoroSession } = await import("@/app/(app)/focus/actions")
+      const pauseRes = await pausePomodoroSession("00000000-0000-0000-0000-000000000001")
+      expect(pauseRes.success).toBe(false)
+      expect(pauseRes.error).toContain("Unauthorized")
+
+      mockGetUser.mockResolvedValueOnce({
+        data: { user: null },
+        error: new Error("No session"),
+      })
+
+      const { resumePomodoroSession } = await import("@/app/(app)/focus/actions")
+      const resumeRes = await resumePomodoroSession({
+        id: "00000000-0000-0000-0000-000000000001",
+        remaining_seconds: 500,
+      })
+      expect(resumeRes.success).toBe(false)
+      expect(resumeRes.error).toContain("Unauthorized")
+    })
+  })
+
+  describe("6. Multi-User Isolation & Anti-Cross-User Access", () => {
     it("prevents User A from completing User B's Pomodoro session", async () => {
       mockGetUser.mockResolvedValueOnce({
         data: { user: { id: "user-attacker", email: "attacker@myos.local" } },
@@ -305,7 +401,7 @@ describe("Focus / Pomodoro Server Actions & Security Tests", () => {
     })
   })
 
-  describe("6. Database Row Level Security (RLS) Policy Verification", () => {
+  describe("7. Database Row Level Security (RLS) Policy Verification", () => {
     const migrationPath = path.join(
       rootDir,
       "supabase/migrations/20260929000000_initial_schema.sql"
@@ -314,9 +410,14 @@ describe("Focus / Pomodoro Server Actions & Security Tests", () => {
       rootDir,
       "supabase/migrations/20260929000001_security_hardening.sql"
     )
+    const pauseMigrationPath = path.join(
+      rootDir,
+      "supabase/migrations/20261004000001_pomodoro_pause.sql"
+    )
 
     const migrationContent = fs.readFileSync(migrationPath, "utf-8")
     const hardeningContent = fs.readFileSync(hardeningPath, "utf-8")
+    const pauseMigrationContent = fs.readFileSync(pauseMigrationPath, "utf-8")
 
     it("verifies RLS is enabled on pomodoro_sessions table", () => {
       expect(migrationContent).toMatch(
@@ -353,9 +454,15 @@ describe("Focus / Pomodoro Server Actions & Security Tests", () => {
         /ALTER\s+TABLE\s+public\.pomodoro_sessions\s+ALTER\s+COLUMN\s+user_id\s+SET\s+DEFAULT\s+auth\.uid\(\)/i
       )
     })
+
+    it("verifies paused_at TIMESTAMPTZ column is added safely via idempotent migration", () => {
+      expect(pauseMigrationContent).toMatch(
+        /ALTER\s+TABLE\s+public\.pomodoro_sessions\s+ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS\s+paused_at\s+TIMESTAMPTZ/i
+      )
+    })
   })
 
-  describe("7. Architectural Boundary Enforcement", () => {
+  describe("8. Architectural Boundary Enforcement", () => {
     it("ensures lib/focus/data.ts imports 'server-only'", () => {
       const dataContent = fs.readFileSync(
         path.join(rootDir, "lib/focus/data.ts"),

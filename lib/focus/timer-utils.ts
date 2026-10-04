@@ -6,6 +6,7 @@ export type PomodoroState =
   | "FOCUS_COMPLETE"
   | "SHORT_BREAK"
   | "BREAK_COMPLETE"
+  | "PAUSED"
 
 export type PomodoroMode =
   | "short_focus"
@@ -200,6 +201,20 @@ export function formatTimerDisplay(totalSeconds: number): string {
 }
 
 /**
+ * Calculates the adjusted started_at timestamp when resuming a paused session,
+ * preserving exactly the remaining seconds and total session duration.
+ */
+export function calculateResumeStartedAt(
+  durationSeconds: number,
+  remainingSeconds: number,
+  nowMs: number = Date.now()
+): string {
+  const elapsedSeconds = Math.max(0, durationSeconds - remainingSeconds)
+  const adjustedStartMs = nowMs - elapsedSeconds * 1000
+  return new Date(adjustedStartMs).toISOString()
+}
+
+/**
  * Determines current Pomodoro state based on active session properties and current time.
  */
 export function derivePomodoroState(
@@ -208,6 +223,7 @@ export function derivePomodoroState(
     started_at: string
     duration_seconds: number
     ended_at: string | null
+    paused_at?: string | null
   } | null,
   now: number = Date.now(),
   defaultDurationSeconds: number = DEFAULT_DURATIONS.focus
@@ -222,6 +238,28 @@ export function derivePomodoroState(
       state: "IDLE",
       remainingSeconds: defaultDurationSeconds,
       progress: 0,
+      isCompleted: false,
+    }
+  }
+
+  // Handle paused session: calculate remaining seconds and progress at the pause timestamp
+  if (session.paused_at) {
+    const pausedMs = toTimestampMs(session.paused_at)
+    const remainingSeconds = calculateRemainingSeconds(
+      session.started_at,
+      session.duration_seconds,
+      pausedMs
+    )
+    const progress = calculateProgress(
+      session.started_at,
+      session.duration_seconds,
+      pausedMs
+    )
+
+    return {
+      state: "PAUSED",
+      remainingSeconds,
+      progress,
       isCompleted: false,
     }
   }

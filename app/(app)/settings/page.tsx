@@ -11,12 +11,16 @@ import { Button } from "@/components/ui/button"
 import { ThemeSelector } from "@/components/settings/theme-selector"
 import { PushNotificationSettings } from "@/components/notifications"
 import { logout } from "@/app/(auth)/actions"
+import { getCurrentUser } from "@/lib/supabase/auth"
 
 export const metadata = {
   title: "Settings",
 }
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const user = await getCurrentUser()
+  const email = user?.email ?? "Not authenticated"
+
   return (
     <div className="flex flex-col gap-6 max-w-4xl">
       {/* Header */}
@@ -59,10 +63,25 @@ export default function SettingsPage() {
             <h3 className="text-sm font-semibold">Profile & Localization</h3>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-mono text-muted-foreground">Display Name</label>
+              <label htmlFor="settings-email" className="text-xs font-mono text-muted-foreground">
+                Account Email
+              </label>
               <input
+                id="settings-email"
+                type="email"
+                value={email}
+                className="h-8 rounded-lg border border-border/60 bg-muted/20 px-3 text-base sm:text-xs font-mono text-foreground outline-hidden select-all"
+                readOnly
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="settings-display-name" className="text-xs font-mono text-muted-foreground">
+                Display Name
+              </label>
+              <input
+                id="settings-display-name"
                 type="text"
                 defaultValue="Achhaya Pathak (Owner)"
                 className="h-8 rounded-lg border border-border/60 bg-muted/20 px-3 text-base sm:text-xs font-mono text-foreground outline-hidden"
@@ -70,8 +89,11 @@ export default function SettingsPage() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-mono text-muted-foreground">Timezone</label>
+              <label htmlFor="settings-timezone" className="text-xs font-mono text-muted-foreground">
+                Timezone
+              </label>
               <input
+                id="settings-timezone"
                 type="text"
                 defaultValue="Asia/Kolkata (IST, UTC+05:30)"
                 className="h-8 rounded-lg border border-border/60 bg-muted/20 px-3 text-base sm:text-xs font-mono text-foreground outline-hidden"
@@ -108,10 +130,12 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-border/40 flex items-center justify-between">
+          <div className="pt-3 border-t border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex flex-col">
               <span className="text-xs font-semibold">Active Session</span>
-              <span className="text-[11px] font-mono text-muted-foreground">Terminate session and clear browser credentials</span>
+              <span className="text-[11px] font-mono text-muted-foreground">
+                Signed in as <span className="text-foreground font-medium">{email}</span> • Terminate session and clear browser credentials
+              </span>
             </div>
             <form action={logout}>
               <Button

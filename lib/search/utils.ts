@@ -92,6 +92,13 @@ export function getTaskMetadata(task: SearchTaskResult, timeZone = DEFAULT_TIMEZ
  * Note metadata summary.
  */
 export function getNoteMetadata(note: SearchNoteResult) {
+  if (note.is_locked) {
+    return {
+      contentSnippet: "Locked note",
+      updatedLabel: formatNoteUpdatedTime(note.updated_at),
+    }
+  }
+
   return {
     contentSnippet: cleanMarkdownSnippet(note.content, 75),
     updatedLabel: formatNoteUpdatedTime(note.updated_at),

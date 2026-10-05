@@ -27,6 +27,27 @@ export const updateNoteSchema = z.object({
   content: z
     .string()
     .optional(),
+  password: z
+    .string()
+    .optional(),
+})
+
+export const lockNoteSchema = z.object({
+  id: z.string().regex(uuidPattern, "Invalid note ID format."),
+  password: z
+    .string()
+    .min(1, "Password is required.")
+    .max(128, "Password must be 128 characters or fewer."),
+})
+
+export const unlockNoteSchema = z.object({
+  id: z.string().regex(uuidPattern, "Invalid note ID format."),
+  password: z.string().min(1, "Password is required."),
+})
+
+export const removeLockSchema = z.object({
+  id: z.string().regex(uuidPattern, "Invalid note ID format."),
+  password: z.string().min(1, "Password is required."),
 })
 
 export const searchNotesSchema = z.object({
@@ -35,3 +56,7 @@ export const searchNotesSchema = z.object({
 
 export type CreateNoteInput = z.infer<typeof createNoteSchema>
 export type UpdateNoteInput = z.infer<typeof updateNoteSchema>
+export type LockNoteInput = z.infer<typeof lockNoteSchema>
+export type UnlockNoteInput = z.infer<typeof unlockNoteSchema>
+export type RemoveLockInput = z.infer<typeof removeLockSchema>
+

@@ -17,6 +17,7 @@ import {
   Plus,
   Play,
   Loader2,
+  Lock,
 } from "lucide-react"
 import {
   CommandDialog,
@@ -395,11 +396,25 @@ export function CommandPalette({
                   className="flex items-center justify-between gap-3 py-2.5 px-3 min-h-[44px] cursor-pointer touch-manipulation"
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <FileText className="size-4 shrink-0 text-emerald-500" />
+                    {note.is_locked ? (
+                      <Lock className="size-4 shrink-0 text-amber-500" />
+                    ) : (
+                      <FileText className="size-4 shrink-0 text-emerald-500" />
+                    )}
                     <div className="flex flex-col min-w-0">
-                      <span className="font-medium truncate text-foreground text-sm">
-                        {note.title}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium truncate text-foreground text-sm">
+                          {note.title}
+                        </span>
+                        {note.is_locked && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1 py-0 h-4 border-amber-500/40 text-amber-500 bg-amber-500/10 font-mono"
+                          >
+                            Locked
+                          </Badge>
+                        )}
+                      </div>
                       {meta.contentSnippet && (
                         <span className="text-xs text-muted-foreground truncate">
                           {meta.contentSnippet}

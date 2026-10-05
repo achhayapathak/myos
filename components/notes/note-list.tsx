@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Plus, Trash2, FileText, X } from "lucide-react"
+import { Search, Plus, Trash2, FileText, X, Lock, LockOpen } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import type { Note } from "@/types/database"
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 interface NoteListProps {
   notes: Note[]
   selectedNoteId: string | null
+  unlockedNoteIds?: string[]
   onSelectNote: (noteId: string) => void
   onCreateNote: () => void
   onDeleteNote: (noteId: string, e: React.MouseEvent) => void
@@ -22,6 +23,7 @@ interface NoteListProps {
 export function NoteList({
   notes,
   selectedNoteId,
+  unlockedNoteIds = [],
   onSelectNote,
   onCreateNote,
   onDeleteNote,
@@ -87,7 +89,12 @@ export function NoteList({
           notes.map((note) => {
             const isSelected = note.id === selectedNoteId
             const updatedLabel = formatNoteUpdatedTime(note.updated_at)
-            const snippet = getNoteSnippet(note.content)
+            const isUnlocked = Boolean(note.is_locked && unlockedNoteIds.includes(note.id))
+            const snippet = getNoteSnippet(
+              note.content,
+              90,
+              Boolean(note.is_locked && !isUnlocked)
+            )
 
             return (
               <div
@@ -109,14 +116,23 @@ export function NoteList({
                 )}
               >
                 <div className="flex items-center justify-between gap-1.5 mb-1">
-                  <span
-                    className={cn(
-                      "text-xs font-medium truncate flex-1",
-                      isSelected ? "text-foreground font-semibold" : "text-foreground/90"
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    {note.is_locked && (
+                      isUnlocked ? (
+                        <LockOpen className="size-3 text-emerald-500 shrink-0" />
+                      ) : (
+                        <Lock className="size-3 text-amber-500 shrink-0" />
+                      )
                     )}
-                  >
-                    {note.title || "Untitled Note"}
-                  </span>
+                    <span
+                      className={cn(
+                        "text-xs font-medium truncate flex-1",
+                        isSelected ? "text-foreground font-semibold" : "text-foreground/90"
+                      )}
+                    >
+                      {note.title || "Untitled Note"}
+                    </span>
+                  </div>
 
                   <span className="text-[10px] font-mono text-muted-foreground shrink-0">
                     {updatedLabel}

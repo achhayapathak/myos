@@ -2,7 +2,14 @@
 
 import * as React from "react"
 import type { Note } from "@/types/database"
-import { createNote, updateNote, deleteNote } from "@/app/(app)/notes/actions"
+import {
+  createNote,
+  updateNote,
+  deleteNote,
+  lockNote,
+  unlockNote,
+  removeNoteLock,
+} from "@/app/(app)/notes/actions"
 import { filterNotes } from "@/lib/notes/utils"
 import { NoteList } from "./note-list"
 import { NoteEditor } from "./note-editor"
@@ -20,6 +27,11 @@ interface NotesViewProps {
 export function NotesView({ initialNotes }: NotesViewProps) {
   const [notes, setNotes] = React.useState<Note[]>(initialNotes)
   const [prevInitialNotes, setPrevInitialNotes] = React.useState(initialNotes)
+
+  // Track session-unlocked notes: noteId -> { content, password }
+  const [unlockedNotes, setUnlockedNotes] = React.useState<
+    Record<string, { content: string; password: string }>
+  >({})
 
   // Sync state if server passes updated initialNotes
   if (prevInitialNotes !== initialNotes) {
@@ -107,14 +119,107 @@ export function NotesView({ initialNotes }: NotesViewProps) {
     }
   }, [handleCreateNote])
 
+  // Unlock Note
+  const handleUnlockNote = async (noteId: string, password: string): Promise<boolean> => {
+    setErrorMessage(null)
+    try {
+      const res = await unlockNote({ id: noteId, password })
+      if (!res.success || !res.data) {
+        return false
+      }
+
+      const content = res.data.content
+      setUnlockedNotes((prev) => ({
+        ...prev,
+        [noteId]: { content, password },
+      }))
+      setNotes((prev) =>
+        prev.map((n) => (n.id === noteId ? { ...n, content } : n))
+      )
+      return true
+    } catch {
+      setErrorMessage("Network error while unlocking note.")
+      return false
+    }
+  }
+
+  // Lock Note
+  const handleLockNote = async (noteId: string, password: string): Promise<boolean> => {
+    setErrorMessage(null)
+    try {
+      const res = await lockNote({ id: noteId, password })
+      if (!res.success) {
+        setErrorMessage(res.error || "Failed to lock note.")
+        return false
+      }
+
+      const note = notes.find((n) => n.id === noteId)
+      const currentContent = note?.content || ""
+
+      setUnlockedNotes((prev) => ({
+        ...prev,
+        [noteId]: { content: currentContent, password },
+      }))
+      setNotes((prev) =>
+        prev.map((n) => (n.id === noteId ? { ...n, is_locked: true } : n))
+      )
+      return true
+    } catch {
+      setErrorMessage("Network error while locking note.")
+      return false
+    }
+  }
+
+  // Remove Lock
+  const handleRemoveLock = async (noteId: string, password: string): Promise<boolean> => {
+    setErrorMessage(null)
+    try {
+      const res = await removeNoteLock({ id: noteId, password })
+      if (!res.success) {
+        setErrorMessage(res.error || "Failed to remove lock.")
+        return false
+      }
+
+      setUnlockedNotes((prev) => {
+        const copy = { ...prev }
+        delete copy[noteId]
+        return copy
+      })
+      setNotes((prev) =>
+        prev.map((n) => (n.id === noteId ? { ...n, is_locked: false } : n))
+      )
+      return true
+    } catch {
+      setErrorMessage("Network error while removing lock.")
+      return false
+    }
+  }
+
+  // Relock note immediately
+  const handleRelockNote = (noteId: string) => {
+    setUnlockedNotes((prev) => {
+      const copy = { ...prev }
+      delete copy[noteId]
+      return copy
+    })
+    setNotes((prev) =>
+      prev.map((n) => (n.id === noteId ? { ...n, content: "" } : n))
+    )
+  }
+
   // Update Note (called by debounced autosave in editor)
   const handleUpdateNote = async (updated: {
     id: string
     title: string
     content: string
+    password?: string
   }): Promise<boolean> => {
     try {
-      const res = await updateNote(updated)
+      const pwd = updated.password || unlockedNotes[updated.id]?.password
+      const res = await updateNote({
+        ...updated,
+        password: pwd,
+      })
       if (!res.success || !res.data) {
         setErrorMessage(res.error || "Failed to save note.")
         return false
@@ -123,9 +228,17 @@ export function NotesView({ initialNotes }: NotesViewProps) {
       const savedNote = res.data
       setNotes((prev) => {
         const others = prev.filter((n) => n.id !== savedNote.id)
-        // Bring most recently updated note to the top
-        return [savedNote, ...others]
+        // Bring most recently updated note to the top while preserving content
+        return [{ ...savedNote, content: updated.content }, ...others]
       })
+
+      if (unlockedNotes[updated.id]) {
+        setUnlockedNotes((prev) => ({
+          ...prev,
+          [updated.id]: { content: updated.content, password: pwd || "" },
+        }))
+      }
+
       return true
     } catch {
       setErrorMessage("Network error during autosave.")
@@ -134,11 +247,17 @@ export function NotesView({ initialNotes }: NotesViewProps) {
   }
 
   // Delete Note
-  const handleDeleteNote = async (noteId: string, e?: React.MouseEvent) => {
+  const handleDeleteNote = async (
+    noteId: string,
+    password?: string,
+    e?: React.MouseEvent
+  ) => {
     if (e) {
       e.stopPropagation()
     }
     setErrorMessage(null)
+
+    const pwd = password || unlockedNotes[noteId]?.password
 
     // Store rollback
     const previousNotes = [...notes]
@@ -152,10 +271,16 @@ export function NotesView({ initialNotes }: NotesViewProps) {
     }
 
     try {
-      const res = await deleteNote(noteId)
+      const res = await deleteNote(noteId, pwd)
       if (!res.success) {
         setNotes(previousNotes)
         setErrorMessage(res.error || "Failed to delete note.")
+      } else {
+        setUnlockedNotes((prev) => {
+          const copy = { ...prev }
+          delete copy[noteId]
+          return copy
+        })
       }
     } catch {
       setNotes(previousNotes)
@@ -168,6 +293,9 @@ export function NotesView({ initialNotes }: NotesViewProps) {
     setSelectedNoteId(noteId)
     setMobileView("editor")
   }
+
+  const isSelectedUnlocked = selectedNote ? Boolean(unlockedNotes[selectedNote.id]) : false
+  const currentPassword = selectedNote ? unlockedNotes[selectedNote.id]?.password : ""
 
   return (
     <div className="flex flex-col gap-3 h-[calc(100dvh-8.5rem)] max-w-6xl mx-auto w-full pb-2 md:pb-4">
@@ -200,9 +328,10 @@ export function NotesView({ initialNotes }: NotesViewProps) {
           <NoteList
             notes={filteredNotes}
             selectedNoteId={selectedNoteId}
+            unlockedNoteIds={Object.keys(unlockedNotes)}
             onSelectNote={handleSelectNote}
             onCreateNote={handleCreateNote}
-            onDeleteNote={handleDeleteNote}
+            onDeleteNote={(id, e) => handleDeleteNote(id, undefined, e)}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
           />
@@ -216,8 +345,14 @@ export function NotesView({ initialNotes }: NotesViewProps) {
         >
           <NoteEditor
             note={selectedNote}
+            isUnlocked={isSelectedUnlocked}
+            unlockedPassword={currentPassword}
             onUpdate={handleUpdateNote}
-            onDelete={(id) => handleDeleteNote(id)}
+            onDelete={(id, pwd) => handleDeleteNote(id, pwd)}
+            onLock={handleLockNote}
+            onUnlock={handleUnlockNote}
+            onRemoveLock={handleRemoveLock}
+            onRelock={handleRelockNote}
             onBackToList={() => setMobileView("list")}
             showBackButton={true}
           />

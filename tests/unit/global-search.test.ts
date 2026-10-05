@@ -262,6 +262,70 @@ describe("Global Search Specification Tests", () => {
       expect(res.data?.events).toHaveLength(1)
       expect(res.data?.events[0]?.title).toBe("Quarterly Review Meeting")
     })
+
+    it("ensures locked notes content is never visible in global search results", async () => {
+      vi.spyOn(authModule, "getCurrentUser").mockResolvedValue({
+        id: "user-999",
+        email: "owner@myos.local",
+        app_metadata: {},
+        user_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+      })
+
+      const mockNotes = [
+        {
+          id: "locked-note-1",
+          title: "Secret Credentials",
+          content: "AWS_SECRET_KEY=supersecret",
+          is_locked: true,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: "locked-note-2",
+          title: "Irrelevant Title",
+          content: "Contains Credentials in content only",
+          is_locked: true,
+          updated_at: new Date().toISOString(),
+        },
+      ]
+
+      const mockFrom = vi.fn((table: string) => ({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            or: vi.fn((filterStr: string) => {
+              // Verifies the PostgREST or filter only searches content for non-locked notes
+              if (table === "notes") {
+                expect(filterStr).toContain("is_locked.eq.false")
+              }
+              return {
+                order: vi.fn(() => ({
+                  limit: vi.fn().mockResolvedValue({
+                    data: table === "notes" ? mockNotes : [],
+                    error: null,
+                  }),
+                })),
+              }
+            }),
+          })),
+        })),
+      }))
+
+      vi.spyOn(serverClientModule, "createClient").mockResolvedValue({
+        from: mockFrom,
+      } as unknown as Awaited<ReturnType<typeof serverClientModule.createClient>>)
+
+      const res = await globalSearchAction("Credentials")
+      expect(res.success).toBe(true)
+
+      // Only the note with "Credentials" in its title is returned
+      expect(res.data?.notes).toHaveLength(1)
+      expect(res.data?.notes[0]?.title).toBe("Secret Credentials")
+      expect(res.data?.notes[0]?.is_locked).toBe(true)
+
+      // Its content is strictly sanitized to empty string so it cannot leak
+      expect(res.data?.notes[0]?.content).toBe("")
+    })
   })
 
   describe("4. Direct Result Navigation Across Routes", () => {

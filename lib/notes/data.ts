@@ -36,12 +36,24 @@ export async function getNotesPageData(): Promise<NotesPageData | null> {
     return null
   }
 
+  // Ensure locked note contents and password hashes are never exposed to browser state
+  const sanitizedNotes: Note[] = (notes || []).map((note) => ({
+    id: note.id,
+    user_id: note.user_id,
+    title: note.title,
+    content: note.is_locked ? "" : note.content,
+    is_locked: Boolean(note.is_locked),
+    created_at: note.created_at,
+    updated_at: note.updated_at,
+  }))
+
   return {
     user: {
       id: user.id,
       displayName: "master",
       email: user.email || null,
     },
-    notes: notes || [],
+    notes: sanitizedNotes,
   }
 }
+

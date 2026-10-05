@@ -3,7 +3,11 @@
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/supabase/auth"
-import type { GlobalSearchResponse, GlobalSearchResults } from "./types"
+import type {
+  GlobalSearchResponse,
+  GlobalSearchResults,
+  SearchNoteResult,
+} from "./types"
 
 const searchQuerySchema = z.string().max(100)
 
@@ -67,9 +71,9 @@ export async function globalSearchAction(
         .limit(8),
       supabase
         .from("notes")
-        .select("id, title, content, updated_at")
+        .select("id, title, content, updated_at, is_locked")
         .eq("user_id", user.id)
-        .or(`title.ilike.%${cleanTerm}%,content.ilike.%${cleanTerm}%`)
+        .or(`title.ilike.%${cleanTerm}%,and(is_locked.eq.false,content.ilike.%${cleanTerm}%)`)
         .order("updated_at", { ascending: false })
         .limit(8),
       supabase
@@ -91,9 +95,26 @@ export async function globalSearchAction(
       return { success: false, error: eventsRes.error.message }
     }
 
+    const sanitizedNotes: GlobalSearchResults["notes"] = (
+      (notesRes.data || []) as (SearchNoteResult & { is_locked?: boolean })[]
+    )
+      .filter((note) => {
+        if (note.is_locked) {
+          return note.title.toLowerCase().includes(cleanTerm.toLowerCase())
+        }
+        return true
+      })
+      .map((note) => ({
+        id: note.id,
+        title: note.title,
+        content: note.is_locked ? "" : note.content,
+        updated_at: note.updated_at,
+        is_locked: Boolean(note.is_locked),
+      }))
+
     const results: GlobalSearchResults = {
       tasks: (tasksRes.data || []) as GlobalSearchResults["tasks"],
-      notes: (notesRes.data || []) as GlobalSearchResults["notes"],
+      notes: sanitizedNotes,
       events: (eventsRes.data || []) as GlobalSearchResults["events"],
     }
 

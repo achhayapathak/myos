@@ -25,7 +25,15 @@ export function deriveNoteTitle(content: string, fallback = "Untitled Note"): st
 /**
  * Extracts a clean plain-text snippet from markdown content for list previews.
  */
-export function getNoteSnippet(content: string, maxLength = 90): string {
+export function getNoteSnippet(
+  content: string,
+  maxLength = 90,
+  isLocked = false
+): string {
+  if (isLocked) {
+    return "Locked note"
+  }
+
   if (!content || !content.trim()) {
     return "No content"
   }
@@ -88,6 +96,7 @@ export function formatNoteUpdatedTime(isoString: string): string {
 
 /**
  * Filters notes matching a search query in their title or content.
+ * Locked notes are strictly matched by title only.
  */
 export function filterNotes(notes: Note[], query: string): Note[] {
   const trimmed = query.trim().toLowerCase()
@@ -97,6 +106,9 @@ export function filterNotes(notes: Note[], query: string): Note[] {
 
   return notes.filter((note) => {
     const titleMatch = note.title.toLowerCase().includes(trimmed)
+    if (note.is_locked) {
+      return titleMatch
+    }
     const contentMatch = (note.content || "").toLowerCase().includes(trimmed)
     return titleMatch || contentMatch
   })

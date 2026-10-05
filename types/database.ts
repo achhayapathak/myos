@@ -95,6 +95,8 @@ export type Note = {
   user_id: string
   title: string
   content: string
+  is_locked?: boolean
+  password_hash?: string | null
   created_at: string
   updated_at: string
 }
@@ -104,6 +106,8 @@ export type NoteInsert = {
   user_id?: string
   title: string
   content?: string
+  is_locked?: boolean
+  password_hash?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -113,6 +117,8 @@ export type NoteUpdate = {
   user_id?: string
   title?: string
   content?: string
+  is_locked?: boolean
+  password_hash?: string | null
   created_at?: string
   updated_at?: string
 }

@@ -15,6 +15,7 @@ export interface SearchNoteResult {
   title: string
   content: string
   updated_at: string
+  is_locked?: boolean
 }
 
 export interface SearchEventResult {

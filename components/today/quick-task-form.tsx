@@ -44,6 +44,15 @@ function getDateButtonLabel(selectedDate: string, todayStr: string, tomorrowStr:
   }).format(dt)
 }
 
+const emptySubscribe = () => () => {}
+
+function checkIsMac(): boolean {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return false
+  const nav = navigator as { userAgentData?: { platform?: string }; platform?: string; userAgent?: string }
+  const platform = nav.userAgentData?.platform || nav.platform || nav.userAgent || ""
+  return /mac|iphone|ipad|ipod/i.test(platform)
+}
+
 export function QuickTaskForm() {
   const [title, setTitle] = React.useState("")
   const [priority, setPriority] = React.useState<TaskPriority>("medium")
@@ -59,6 +68,57 @@ export function QuickTaskForm() {
   const [error, setError] = React.useState<string | null>(null)
   const [success, setSuccess] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const [isFocused, setIsFocused] = React.useState(false)
+  const isMac = React.useSyncExternalStore(emptySubscribe, checkIsMac, () => false)
+
+  // Focus helper for typing mode
+  const focusInput = React.useCallback(() => {
+    if (inputRef.current) {
+      inputRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      inputRef.current.focus()
+    }
+  }, [])
+
+  // Global Keyboard Shortcuts
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if modal dialog is open or event was handled
+      if (document.querySelector('[role="dialog"]') || e.defaultPrevented) return
+
+      const target = e.target as HTMLElement | null
+      const isInput =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+
+      const isKeyT = e.code === "KeyT" || e.key.toLowerCase() === "t"
+
+      // Supported shortcuts:
+      // 1. Ctrl + T (both Mac Control and Windows Ctrl)
+      // 2. Alt + T (Option + T on Mac, Alt + T on Windows)
+      // 3. Single key 't' when not typing in any input field
+      const isCtrlT = e.ctrlKey && isKeyT
+      const isAltT = e.altKey && isKeyT
+      const isSingleT = !isInput && !e.ctrlKey && !e.metaKey && !e.altKey && isKeyT
+
+      if (isCtrlT || isAltT || isSingleT) {
+        e.preventDefault()
+        focusInput()
+      }
+    }
+
+    const handleFocusEvent = () => {
+      focusInput()
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("myos:focus-quick-task", handleFocusEvent)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("myos:focus-quick-task", handleFocusEvent)
+    }
+  }, [focusInput])
 
   // Calendar month details
   const viewYear = viewDate.getFullYear()
@@ -108,21 +168,57 @@ export function QuickTaskForm() {
     })
   }
 
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      e.preventDefault()
+      inputRef.current?.blur()
+    }
+  }
+
   return (
     <div
       id="quick-task"
-      className="rounded-xl border border-border/70 bg-card p-4 shadow-xs"
+      className={cn(
+        "rounded-xl border bg-card p-4 shadow-xs transition-all duration-200",
+        isFocused
+          ? "border-primary/60 ring-2 ring-primary/20 shadow-md"
+          : "border-border/70"
+      )}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <label
-            htmlFor="quick-task-input"
-            className="text-xs font-mono uppercase tracking-wider font-semibold text-foreground flex items-center gap-1.5"
-          >
-            <Plus className="size-3.5 text-muted-foreground" />
-            <span>Quick Task</span>
-          </label>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="quick-task-input"
+              className="text-xs font-mono uppercase tracking-wider font-semibold text-foreground flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="size-3.5 text-muted-foreground" />
+              <span>Quick Task</span>
+            </label>
+            <button
+              type="button"
+              onClick={focusInput}
+              aria-label={`Focus quick task input (Shortcut: ${isMac ? "ctl + t" : "Ctrl + T"} or T)`}
+              title={`Focus Quick Task (${isMac ? "ctl + t (⌃T)" : "Ctrl+T"}, Alt+T, or press T)`}
+              className={cn(
+                "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium border transition-all cursor-pointer touch-manipulation",
+                isFocused
+                  ? "border-primary/50 bg-primary/10 text-primary"
+                  : "border-border/60 bg-muted/20 hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <kbd className="font-semibold">{isMac ? "ctl + t" : "Ctrl+T"}</kbd>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isFocused && (
+              <span className="text-[10px] font-mono text-primary flex items-center gap-1 animate-in fade-in">
+                <span className="size-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="hidden sm:inline">Typing mode</span>
+                <kbd className="px-1 py-0.2 rounded bg-muted/60 text-[9px] border border-border/50">Esc</kbd>
+              </span>
+            )}
             {success && (
               <span className="text-[11px] font-mono text-emerald-500 animate-in fade-in">
                 Added!
@@ -141,6 +237,9 @@ export function QuickTaskForm() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            onKeyDown={handleInputKeyDown}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             placeholder="What needs to be done? (e.g. Deploy release, update docs...)"
             disabled={isPending}
             className="flex-1 text-base sm:text-xs font-sans h-9 sm:h-8.5 bg-muted/20"

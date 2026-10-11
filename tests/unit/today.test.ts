@@ -407,4 +407,86 @@ describe("Today Dashboard Unit Tests", () => {
       )
     })
   })
+
+  describe("6. Today Page Keyboard Shortcuts & Typing Mode", () => {
+    it("verifies QuickTaskForm contains keyboard shortcuts and renders shortcut button", async () => {
+      const filePath = path.join(rootDir, "components/today/quick-task-form.tsx")
+      const content = fs.readFileSync(filePath, "utf-8")
+
+      // Must be a client component
+      expect(content).toMatch(/^["']use client["']/)
+
+      // Key shortcut listeners
+      expect(content).toContain("myos:focus-quick-task")
+      expect(content).toContain("KeyT")
+      expect(content).toContain("isCtrlT")
+      expect(content).toContain("isAltT")
+      expect(content).toContain("Escape")
+
+      // Static markup rendering
+      const React = await import("react")
+      const { QuickTaskForm } = await import("@/components/today/quick-task-form")
+      const { renderToStaticMarkup } = await import("react-dom/server")
+      const html = renderToStaticMarkup(React.createElement(QuickTaskForm))
+
+      expect(html).toContain("quick-task-input")
+      expect(html).toContain("Ctrl+T")
+      expect(html).toContain("Focus quick task input")
+    })
+
+    it("verifies QuickNoteForm contains keyboard shortcuts and renders shortcut button", async () => {
+      const filePath = path.join(rootDir, "components/today/quick-note-form.tsx")
+      const content = fs.readFileSync(filePath, "utf-8")
+
+      // Must be a client component
+      expect(content).toMatch(/^["']use client["']/)
+
+      // Key shortcut listeners
+      expect(content).toContain("myos:focus-quick-note")
+      expect(content).toContain("KeyN")
+      expect(content).toContain("isCtrlN")
+      expect(content).toContain("isAltN")
+      expect(content).toContain("Escape")
+
+      // Static markup rendering
+      const React = await import("react")
+      const { QuickNoteForm } = await import("@/components/today/quick-note-form")
+      const { renderToStaticMarkup } = await import("react-dom/server")
+      const html = renderToStaticMarkup(React.createElement(QuickNoteForm))
+
+      expect(html).toContain("quick-note-textarea")
+      expect(html).toContain("Ctrl+N")
+      expect(html).toContain("Focus quick note textarea")
+    })
+
+    it("verifies shortcut logic guards against open modal dialogs and active inputs", () => {
+      const taskFilePath = path.join(rootDir, "components/today/quick-task-form.tsx")
+      const noteFilePath = path.join(rootDir, "components/today/quick-note-form.tsx")
+
+      const taskContent = fs.readFileSync(taskFilePath, "utf-8")
+      const noteContent = fs.readFileSync(noteFilePath, "utf-8")
+
+      // Both must check for role="dialog"
+      expect(taskContent).toContain('document.querySelector(\'[role="dialog"]\')')
+      expect(noteContent).toContain('document.querySelector(\'[role="dialog"]\')')
+
+      // Both must check for input/textarea before triggering single-key shortcuts
+      expect(taskContent).toContain("isInput")
+      expect(noteContent).toContain("isInput")
+    })
+
+    it("verifies typing mode visual indicator and Escape key support exist", () => {
+      const taskFilePath = path.join(rootDir, "components/today/quick-task-form.tsx")
+      const noteFilePath = path.join(rootDir, "components/today/quick-note-form.tsx")
+
+      const taskContent = fs.readFileSync(taskFilePath, "utf-8")
+      const noteContent = fs.readFileSync(noteFilePath, "utf-8")
+
+      expect(taskContent).toContain("Typing mode")
+      expect(taskContent).toContain("ring-primary")
+      expect(noteContent).toContain("Typing mode")
+      expect(noteContent).toContain("ring-primary")
+    })
+  })
 })
+

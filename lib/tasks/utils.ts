@@ -258,15 +258,37 @@ export function filterTasks(tasks: Task[], options: FilterOptions): Task[] {
   })
 }
 
+export interface SortTasksOptions {
+  completedAtBottom?: boolean
+}
+
 /**
  * Sorts tasks by due date, priority, creation date, or title.
+ * When options.completedAtBottom is true, active tasks (todo, in_progress) appear on top,
+ * followed by completed tasks, then cancelled tasks.
  */
 export function sortTasks(
   tasks: Task[],
   sortField: TaskSortField,
-  sortOrder: TaskSortOrder
+  sortOrder: TaskSortOrder,
+  options?: SortTasksOptions
 ): Task[] {
+  const completedAtBottom = options?.completedAtBottom ?? false
+
   return [...tasks].sort((a, b) => {
+    if (completedAtBottom) {
+      // Status tiers: 0 for active ("todo", "in_progress"), 1 for "completed", 2 for "cancelled"
+      const getRank = (status: TaskStatus) => {
+        if (status === "todo" || status === "in_progress") return 0
+        if (status === "completed") return 1
+        return 2
+      }
+      const rankDiff = getRank(a.status) - getRank(b.status)
+      if (rankDiff !== 0) {
+        return rankDiff
+      }
+    }
+
     let comparison = 0
 
     switch (sortField) {
@@ -299,3 +321,4 @@ export function sortTasks(
     return sortOrder === "asc" ? comparison : -comparison
   })
 }
+

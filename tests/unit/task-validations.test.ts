@@ -355,6 +355,55 @@ describe("Task Validations & Pure Utilities", () => {
         expect(titles[0]).toBe("Deploy PWA v2")
         expect(titles[titles.length - 1]).toBe("Write documentation")
       })
+
+      it("moves completed tasks to bottom and todo/in-progress to top when completedAtBottom is true", () => {
+        const sorted = sortTasks(sampleTasks, "created_at", "desc", { completedAtBottom: true })
+        // Active tasks: task-5 (todo), task-2 (in_progress), task-1 (todo)
+        // Completed: task-3
+        // Cancelled: task-4
+        expect(sorted.map((t) => t.id)).toEqual([
+          "task-5",
+          "task-2",
+          "task-1",
+          "task-3",
+          "task-4",
+        ])
+        expect(sorted[0].status).toBe("todo")
+        expect(sorted[1].status).toBe("in_progress")
+        expect(sorted[2].status).toBe("todo")
+        expect(sorted[3].status).toBe("completed")
+        expect(sorted[4].status).toBe("cancelled")
+      })
+
+      it("keeps active tasks at top even when sortOrder is ascending", () => {
+        const sorted = sortTasks(sampleTasks, "created_at", "asc", { completedAtBottom: true })
+        // Active tasks in asc order: task-1 (Sep 28), task-2 (Sep 29), task-5 (Sep 30)
+        // Completed: task-3
+        // Cancelled: task-4
+        expect(sorted.map((t) => t.id)).toEqual([
+          "task-1",
+          "task-2",
+          "task-5",
+          "task-3",
+          "task-4",
+        ])
+      })
+
+      it("sorts active tasks by priority while placing completed tasks at bottom", () => {
+        const sorted = sortTasks(sampleTasks, "priority", "desc", { completedAtBottom: true })
+        // Active tasks: task-1 (high), task-5 (high), task-2 (medium)
+        // Completed: task-3 (low)
+        // Cancelled: task-4 (medium)
+        expect(sorted.slice(0, 3).map((t) => t.status)).toEqual([
+          "todo",
+          "todo",
+          "in_progress",
+        ])
+        expect(sorted[3].id).toBe("task-3")
+        expect(sorted[3].status).toBe("completed")
+        expect(sorted[4].id).toBe("task-4")
+        expect(sorted[4].status).toBe("cancelled")
+      })
     })
 
     describe("getTaskCounts", () => {

@@ -269,7 +269,7 @@ export function TasksView({
       endISO,
     })
 
-    return sortTasks(filtered, sortField, sortOrder)
+    return sortTasks(filtered, sortField, sortOrder, { completedAtBottom: true })
   }, [
     tasks,
     statusFilter,

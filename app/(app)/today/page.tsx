@@ -39,16 +39,29 @@ export default async function TodayPage() {
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto pb-12">
       {/* 1. Header with greeting, formatted date, and metric summary */}
-      <TodayHeader
-        displayName="master"
-        formattedDate={bounds.formattedDate}
-        greeting={bounds.greeting}
-        timeZone="Asia/Kolkata"
-        pendingDueCount={pendingDueCount}
-        remindersCount={pendingRemindersCount}
-        completedTodayCount={completedTasksTodayCount}
-        focusMinutesToday={focusSummary.totalFocusMinutesToday}
-      />
+      {data.user.email?.toLowerCase() === "dolly@achhaya.com" ? (
+        <TodayHeader
+          displayName="baby"
+          formattedDate={bounds.formattedDate}
+          greeting={bounds.greeting}
+          timeZone="Asia/Kolkata"
+          pendingDueCount={pendingDueCount}
+          remindersCount={pendingRemindersCount}
+          completedTodayCount={completedTasksTodayCount}
+          focusMinutesToday={focusSummary.totalFocusMinutesToday}
+        />
+      ) : (
+        <TodayHeader
+          displayName="master"
+          formattedDate={bounds.formattedDate}
+          greeting={bounds.greeting}
+          timeZone="Asia/Kolkata"
+          pendingDueCount={pendingDueCount}
+          remindersCount={pendingRemindersCount}
+          completedTodayCount={completedTasksTodayCount}
+          focusMinutesToday={focusSummary.totalFocusMinutesToday}
+        />
+      )}
 
       {/* 2. Responsive Dashboard Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">

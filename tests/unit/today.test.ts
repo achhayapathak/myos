@@ -199,6 +199,13 @@ describe("Today Dashboard Unit Tests", () => {
       expect(content).toContain('displayName="master"')
     })
 
+    it("verifies Today page conditionally renders 'baby' for dolly@achhaya.com", () => {
+      const pagePath = path.join(rootDir, "app/(app)/today/page.tsx")
+      const content = fs.readFileSync(pagePath, "utf-8")
+      expect(content).toContain("dolly@achhaya.com")
+      expect(content).toContain('displayName="baby"')
+    })
+
     it("verifies QuickNoteForm is placed in companion column directly above FocusStatusCard", () => {
       const pagePath = path.join(rootDir, "app/(app)/today/page.tsx")
       const content = fs.readFileSync(pagePath, "utf-8")

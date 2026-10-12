@@ -81,6 +81,7 @@ describe("Today Dashboard Unit Tests", () => {
     it("verifies all reusable components exist under components/today", () => {
       const expectedComponents = [
         "today-header.tsx",
+        "today-refresh-button.tsx",
         "digital-clock.tsx",
         "task-item.tsx",
         "tasks-due-today.tsx",
@@ -97,6 +98,12 @@ describe("Today Dashboard Unit Tests", () => {
         const compPath = path.join(rootDir, "components/today", comp)
         expect(fs.existsSync(compPath)).toBe(true)
       }
+    })
+
+    it("verifies components/today/today-refresh-button.tsx is a client component", () => {
+      const filePath = path.join(rootDir, "components/today/today-refresh-button.tsx")
+      const content = fs.readFileSync(filePath, "utf-8")
+      expect(content).toMatch(/^["']use client["']/)
     })
 
     it("verifies components/today/today-reminders.tsx is a client component", () => {
@@ -162,6 +169,28 @@ describe("Today Dashboard Unit Tests", () => {
         })
       )
       expect(html).toContain("Good evening, master.")
+    })
+
+    it("renders TodayHeader with refresh button next to focus mode button", async () => {
+      const { TodayHeader } = await import("@/components/today/today-header")
+      const { renderToStaticMarkup } = await import("react-dom/server")
+      const html = renderToStaticMarkup(
+        TodayHeader({
+          formattedDate: "Sunday, October 4, 2026",
+          greeting: "Good evening",
+          pendingDueCount: 3,
+          completedTodayCount: 1,
+          focusMinutesToday: 25,
+        })
+      )
+      expect(html).toContain("Focus Mode")
+      expect(html).toContain("Refresh")
+      expect(html).toContain('aria-label="Refresh page"')
+      const focusIndex = html.indexOf("Focus Mode")
+      const refreshIndex = html.indexOf("Refresh")
+      expect(focusIndex).toBeGreaterThan(-1)
+      expect(refreshIndex).toBeGreaterThan(-1)
+      expect(focusIndex).toBeLessThan(refreshIndex)
     })
 
     it("verifies Today page explicitly passes 'master' to TodayHeader", () => {

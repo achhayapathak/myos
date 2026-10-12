@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { DigitalClock } from "./digital-clock"
+import { TodayRefreshButton } from "./today-refresh-button"
+
 
 interface TodayHeaderProps {
   displayName?: string
@@ -63,6 +65,8 @@ export function TodayHeader({
             <Play className="size-3.5 fill-current" />
             <span>Focus Mode</span>
           </Link>
+
+          <TodayRefreshButton />
         </div>
       </div>
 

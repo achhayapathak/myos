@@ -395,3 +395,92 @@ export async function searchNotes(
 
   return { success: true, data: sanitizedNotes }
 }
+
+/**
+ * Server Action to share a note by generating a random share token.
+ * Locked notes cannot be shared.
+ * User identity comes from the authenticated session.
+ */
+export async function shareNote(
+  noteId: string
+): Promise<NoteActionResponse<{ shareToken: string }>> {
+  if (!noteId || typeof noteId !== "string") {
+    return { success: false, error: "Note ID is required." }
+  }
+
+  const user = await getCurrentUser()
+  if (!user) {
+    return { success: false, error: "Unauthorized: Active session required." }
+  }
+
+  const supabase = await createClient()
+
+  // Verify ownership and that note is not locked
+  const { data: note, error: fetchError } = await supabase
+    .from("notes")
+    .select("id, is_locked, is_shared, share_token")
+    .eq("id", noteId)
+    .eq("user_id", user.id)
+    .single()
+
+  if (fetchError || !note) {
+    return { success: false, error: "Note not found." }
+  }
+
+  if (note.is_locked) {
+    return { success: false, error: "Locked notes cannot be shared." }
+  }
+
+  // Re-use existing token if already shared, otherwise generate a new one
+  const shareToken: string =
+    note.is_shared && note.share_token
+      ? (note.share_token as string)
+      : crypto.randomUUID()
+
+  const { error: updateError } = await supabase
+    .from("notes")
+    .update({ is_shared: true, share_token: shareToken })
+    .eq("id", noteId)
+    .eq("user_id", user.id)
+
+  if (updateError) {
+    return { success: false, error: updateError.message }
+  }
+
+  revalidatePath("/notes")
+
+  return { success: true, data: { shareToken } }
+}
+
+/**
+ * Server Action to revoke a note's public share link.
+ * Sets is_shared = false and clears the share_token.
+ */
+export async function unshareNote(
+  noteId: string
+): Promise<NoteActionResponse<void>> {
+  if (!noteId || typeof noteId !== "string") {
+    return { success: false, error: "Note ID is required." }
+  }
+
+  const user = await getCurrentUser()
+  if (!user) {
+    return { success: false, error: "Unauthorized: Active session required." }
+  }
+
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from("notes")
+    .update({ is_shared: false, share_token: null })
+    .eq("id", noteId)
+    .eq("user_id", user.id)
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath("/notes")
+
+  return { success: true }
+}

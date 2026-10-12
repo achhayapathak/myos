@@ -15,6 +15,9 @@ import {
   LockOpen,
   KeyRound,
   Link as LinkIcon,
+  Globe,
+  Copy,
+  Link2Off,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -65,6 +68,8 @@ interface NoteEditorProps {
   onUnlock?: (noteId: string, password: string) => Promise<boolean>
   onRemoveLock?: (noteId: string, password: string) => Promise<boolean>
   onRelock?: (noteId: string) => void
+  onShare?: (noteId: string) => Promise<{ shareToken: string } | null>
+  onUnshare?: (noteId: string) => Promise<boolean>
   onBackToList?: () => void
   showBackButton?: boolean
 }
@@ -81,6 +86,8 @@ export function NoteEditor({
   onUnlock,
   onRemoveLock,
   onRelock,
+  onShare,
+  onUnshare,
   onBackToList,
   showBackButton = false,
 }: NoteEditorProps) {
@@ -120,6 +127,8 @@ export function NoteEditor({
       onLock={onLock}
       onRemoveLock={onRemoveLock}
       onRelock={onRelock}
+      onShare={onShare}
+      onUnshare={onUnshare}
       onBackToList={onBackToList}
       showBackButton={showBackButton}
     />
@@ -261,6 +270,8 @@ function NoteEditorInner({
   onLock,
   onRemoveLock,
   onRelock,
+  onShare,
+  onUnshare,
   onBackToList,
   showBackButton = false,
 }: {
@@ -276,6 +287,8 @@ function NoteEditorInner({
   onLock?: (noteId: string, password: string) => Promise<boolean>
   onRemoveLock?: (noteId: string, password: string) => Promise<boolean>
   onRelock?: (noteId: string) => void
+  onShare?: (noteId: string) => Promise<{ shareToken: string } | null>
+  onUnshare?: (noteId: string) => Promise<boolean>
   onBackToList?: () => void
   showBackButton?: boolean
 }) {
@@ -297,6 +310,20 @@ function NoteEditorInner({
   const [removePassword, setRemovePassword] = React.useState(unlockedPassword)
   const [removeError, setRemoveError] = React.useState<string | null>(null)
   const [isRemoving, setIsRemoving] = React.useState(false)
+
+  // Share dialog state
+  const [showShareDialog, setShowShareDialog] = React.useState(false)
+  const [isSharing, setIsSharing] = React.useState(false)
+  const [isUnsharing, setIsUnsharing] = React.useState(false)
+  const [shareError, setShareError] = React.useState<string | null>(null)
+  const [copiedLink, setCopiedLink] = React.useState(false)
+  // Track current share state locally; sync from note prop
+  const [localIsShared, setLocalIsShared] = React.useState(Boolean(note.is_shared))
+  const [localShareToken, setLocalShareToken] = React.useState<string | null>(note.share_token ?? null)
+
+  const shareUrl = localShareToken
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/share/${localShareToken}`
+    : null
 
   const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null)
 
@@ -720,8 +747,31 @@ function NoteEditorInner({
 
         {/* Right Toolbar: Lock status, Autosave status, View Mode toggle, Delete */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Share Button */}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => {
+              setShareError(null)
+              setShowShareDialog(true)
+            }}
+            disabled={Boolean(note.is_locked)}
+            className={cn(
+              "size-8 cursor-pointer touch-manipulation",
+              localIsShared
+                ? "text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
+                : "text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10"
+            )}
+            title={note.is_locked ? "Unlock note to share" : localIsShared ? "Manage share link" : "Share note"}
+            aria-label={localIsShared ? "Manage share link" : "Share note"}
+          >
+            <Globe className="size-3.5" />
+          </Button>
+
+
           {/* Lock / Security Controls */}
           {note.is_locked ? (
+
             <div className="flex items-center gap-1">
               <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                 <LockOpen className="size-3" />
@@ -885,6 +935,151 @@ function NoteEditorInner({
           </span>
         </div>
       </div>
+
+      {/* Share Dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-foreground">
+              <Globe className="size-4 text-blue-500" />
+              <DialogTitle>Share Note</DialogTitle>
+            </div>
+            <DialogDescription>
+              {localIsShared
+                ? "This note is publicly shared. Anyone with the link can view it in read-only mode."
+                : "Generate a shareable link so anyone can view this note. The link reflects the latest content."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {localIsShared && shareUrl ? (
+              <>
+                {/* Link display */}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-muted/60 border border-border/60 font-mono text-xs text-foreground/80 truncate">
+                    {shareUrl}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 font-mono text-xs h-9 cursor-pointer"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(shareUrl)
+                      setCopiedLink(true)
+                      setTimeout(() => setCopiedLink(false), 2000)
+                    }}
+                    aria-label="Copy share link"
+                  >
+                    {copiedLink ? (
+                      <><Check className="size-3.5 text-emerald-500" /><span className="ml-1">Copied!</span></>
+                    ) : (
+                      <><Copy className="size-3.5" /><span className="ml-1">Copy</span></>
+                    )}
+                  </Button>
+                </div>
+
+                {shareError && (
+                  <p className="text-xs font-mono text-destructive flex items-center gap-1.5">
+                    <AlertCircle className="size-3.5 shrink-0" />
+                    <span>{shareError}</span>
+                  </p>
+                )}
+
+                <div className="pt-1 border-t border-border/40 flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-mono text-muted-foreground">
+                    Revoking the link will make it inaccessible immediately.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isUnsharing}
+                    className="shrink-0 font-mono text-xs h-8 text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10 cursor-pointer"
+                    onClick={async () => {
+                      setIsUnsharing(true)
+                      setShareError(null)
+                      try {
+                        const ok = await onUnshare?.(note.id)
+                        if (ok) {
+                          setLocalIsShared(false)
+                          setLocalShareToken(null)
+                          setShowShareDialog(false)
+                        } else {
+                          setShareError("Failed to revoke share link.")
+                        }
+                      } catch {
+                        setShareError("Network error.")
+                      } finally {
+                        setIsUnsharing(false)
+                      }
+                    }}
+                  >
+                    {isUnsharing ? (
+                      <><Loader2 className="size-3 animate-spin" /><span className="ml-1">Revoking...</span></>
+                    ) : (
+                      <><Link2Off className="size-3" /><span className="ml-1">Revoke</span></>
+                    )}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-mono text-muted-foreground">
+                  The link will always show the latest version of this note.
+                  You can revoke it at any time.
+                </p>
+
+                {shareError && (
+                  <p className="text-xs font-mono text-destructive flex items-center gap-1.5">
+                    <AlertCircle className="size-3.5 shrink-0" />
+                    <span>{shareError}</span>
+                  </p>
+                )}
+
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowShareDialog(false)}
+                    className="font-mono text-xs"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={isSharing}
+                    className="font-mono text-xs cursor-pointer"
+                    onClick={async () => {
+                      setIsSharing(true)
+                      setShareError(null)
+                      try {
+                        const result = await onShare?.(note.id)
+                        if (result?.shareToken) {
+                          setLocalIsShared(true)
+                          setLocalShareToken(result.shareToken)
+                        } else {
+                          setShareError("Failed to generate share link.")
+                        }
+                      } catch {
+                        setShareError("Network error.")
+                      } finally {
+                        setIsSharing(false)
+                      }
+                    }}
+                  >
+                    {isSharing ? (
+                      <><Loader2 className="size-3 animate-spin mr-1.5" /><span>Generating...</span></>
+                    ) : (
+                      <><Globe className="size-3 mr-1.5" /><span>Generate Link</span></>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Set Password Lock Dialog */}
       <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>

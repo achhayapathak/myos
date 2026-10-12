@@ -97,6 +97,8 @@ export type Note = {
   content: string
   is_locked?: boolean
   password_hash?: string | null
+  is_shared?: boolean
+  share_token?: string | null
   created_at: string
   updated_at: string
 }
@@ -108,6 +110,8 @@ export type NoteInsert = {
   content?: string
   is_locked?: boolean
   password_hash?: string | null
+  is_shared?: boolean
+  share_token?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -119,6 +123,8 @@ export type NoteUpdate = {
   content?: string
   is_locked?: boolean
   password_hash?: string | null
+  is_shared?: boolean
+  share_token?: string | null
   created_at?: string
   updated_at?: string
 }

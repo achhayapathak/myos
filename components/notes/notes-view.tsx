@@ -9,6 +9,8 @@ import {
   lockNote,
   unlockNote,
   removeNoteLock,
+  shareNote,
+  unshareNote,
 } from "@/app/(app)/notes/actions"
 import { filterNotes } from "@/lib/notes/utils"
 import { NoteList } from "./note-list"
@@ -207,6 +209,51 @@ export function NotesView({ initialNotes }: NotesViewProps) {
     )
   }
 
+  // Share Note
+  const handleShareNote = async (
+    noteId: string
+  ): Promise<{ shareToken: string } | null> => {
+    setErrorMessage(null)
+    try {
+      const res = await shareNote(noteId)
+      if (!res.success || !res.data) {
+        setErrorMessage(res.error || "Failed to share note.")
+        return null
+      }
+      const { shareToken } = res.data
+      setNotes((prev) =>
+        prev.map((n) =>
+          n.id === noteId ? { ...n, is_shared: true, share_token: shareToken } : n
+        )
+      )
+      return { shareToken }
+    } catch {
+      setErrorMessage("Network error while sharing note.")
+      return null
+    }
+  }
+
+  // Unshare Note
+  const handleUnshareNote = async (noteId: string): Promise<boolean> => {
+    setErrorMessage(null)
+    try {
+      const res = await unshareNote(noteId)
+      if (!res.success) {
+        setErrorMessage(res.error || "Failed to unshare note.")
+        return false
+      }
+      setNotes((prev) =>
+        prev.map((n) =>
+          n.id === noteId ? { ...n, is_shared: false, share_token: null } : n
+        )
+      )
+      return true
+    } catch {
+      setErrorMessage("Network error while unsharing note.")
+      return false
+    }
+  }
+
   // Update Note (called by debounced autosave in editor)
   const handleUpdateNote = async (updated: {
     id: string
@@ -353,6 +400,8 @@ export function NotesView({ initialNotes }: NotesViewProps) {
             onUnlock={handleUnlockNote}
             onRemoveLock={handleRemoveLock}
             onRelock={handleRelockNote}
+            onShare={handleShareNote}
+            onUnshare={handleUnshareNote}
             onBackToList={() => setMobileView("list")}
             showBackButton={true}
           />

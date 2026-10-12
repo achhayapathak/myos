@@ -43,9 +43,12 @@ export async function getNotesPageData(): Promise<NotesPageData | null> {
     title: note.title,
     content: note.is_locked ? "" : note.content,
     is_locked: Boolean(note.is_locked),
+    is_shared: Boolean(note.is_shared),
+    share_token: note.is_locked ? null : (note.share_token ?? null),
     created_at: note.created_at,
     updated_at: note.updated_at,
   }))
+
 
   return {
     user: {

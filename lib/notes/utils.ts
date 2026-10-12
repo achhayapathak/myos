@@ -13,6 +13,7 @@ export function deriveNoteTitle(content: string, fallback = "Untitled Note"): st
     const cleaned = line
       .replace(/^[#*>\s\-+]+/, "")
       .replace(/^\[[ xX]\]\s+/, "")
+      .replace(/<\/?[a-z0-9]+[^>]*>/gi, "")
       .trim()
     if (cleaned.length > 0) {
       return cleaned.slice(0, 60)
@@ -42,6 +43,7 @@ export function getNoteSnippet(
     .replace(/^```[\s\S]*?```/gm, "[Code]")
     .replace(/^[#*>\-+`]+ /gm, "")
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/<\/?[a-z0-9]+[^>]*>/gi, "")
     .replace(/[*_~`]/g, "")
     .split("\n")
     .map((l) => l.trim())

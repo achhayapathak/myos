@@ -14,6 +14,7 @@ import {
   Lock,
   LockOpen,
   KeyRound,
+  Link as LinkIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,6 +30,22 @@ import type { Note } from "@/types/database"
 import { MarkdownPreview } from "@/lib/notes/markdown"
 import { getNoteStats } from "@/lib/notes/utils"
 import { cn } from "@/lib/utils"
+import { EditorToolbar, type ToolbarActionType } from "./editor-toolbar"
+import {
+  toggleInlineFormat,
+  toggleUnderline,
+  toggleHeading,
+  toggleList,
+  toggleBlockquote,
+  toggleCodeBlock,
+  insertLink,
+  insertHorizontalRule,
+  insertTable,
+  clearFormatting,
+  indentLines,
+  detectActiveFormats,
+  type ActiveFormats,
+} from "@/lib/notes/editor-actions"
 
 interface NoteEditorProps {
   note: Note | null
@@ -352,10 +369,261 @@ function NoteEditorInner({
     triggerAutosave(newTitle, content)
   }
 
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+
+  // Link dialog states
+  const [showLinkDialog, setShowLinkDialog] = React.useState(false)
+  const [linkUrl, setLinkUrl] = React.useState("https://")
+  const [linkTitle, setLinkTitle] = React.useState("")
+  const [linkSelection, setLinkSelection] = React.useState<{ start: number; end: number }>({
+    start: 0,
+    end: 0,
+  })
+
+  // Undo / Redo history
+  const historyRef = React.useRef<{ content: string; start: number; end: number }[]>([
+    { content: note.content || "", start: 0, end: 0 },
+  ])
+  const historyIndexRef = React.useRef(0)
+  const [canUndo, setCanUndo] = React.useState(false)
+  const [canRedo, setCanRedo] = React.useState(false)
+
+  const pushHistory = React.useCallback((newContent: string, start: number, end: number) => {
+    const truncated = historyRef.current.slice(0, historyIndexRef.current + 1)
+    truncated.push({ content: newContent, start, end })
+    if (truncated.length > 50) {
+      truncated.shift()
+    }
+    historyRef.current = truncated
+    historyIndexRef.current = truncated.length - 1
+    setCanUndo(historyIndexRef.current > 0)
+    setCanRedo(false)
+  }, [])
+
+  const handleUndo = React.useCallback(() => {
+    if (historyIndexRef.current > 0) {
+      historyIndexRef.current -= 1
+      const entry = historyRef.current[historyIndexRef.current]
+      setContent(entry.content)
+      triggerAutosave(title, entry.content)
+      setCanUndo(historyIndexRef.current > 0)
+      setCanRedo(true)
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus()
+          textareaRef.current.setSelectionRange(entry.start, entry.end)
+        }
+      }, 0)
+    }
+  }, [title, triggerAutosave])
+
+  const handleRedo = React.useCallback(() => {
+    if (historyIndexRef.current < historyRef.current.length - 1) {
+      historyIndexRef.current += 1
+      const entry = historyRef.current[historyIndexRef.current]
+      setContent(entry.content)
+      triggerAutosave(title, entry.content)
+      setCanUndo(true)
+      setCanRedo(historyIndexRef.current < historyRef.current.length - 1)
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus()
+          textareaRef.current.setSelectionRange(entry.start, entry.end)
+        }
+      }, 0)
+    }
+  }, [title, triggerAutosave])
+
+  const [activeFormats, setActiveFormats] = React.useState<ActiveFormats>({
+    bold: false,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    code: false,
+    h1: false,
+    h2: false,
+    h3: false,
+    bulletList: false,
+    numberList: false,
+    taskList: false,
+    quote: false,
+    codeBlock: false,
+  })
+
+  const updateActiveFormats = React.useCallback(() => {
+    if (!textareaRef.current) return
+    const start = textareaRef.current.selectionStart
+    const end = textareaRef.current.selectionEnd
+    const detected = detectActiveFormats(content, start, end)
+    setActiveFormats(detected)
+  }, [content])
+
+  const applyFormattingResult = React.useCallback(
+    (result: { text: string; selection: { start: number; end: number } }) => {
+      setContent(result.text)
+      triggerAutosave(title, result.text)
+      pushHistory(result.text, result.selection.start, result.selection.end)
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus()
+          textareaRef.current.setSelectionRange(result.selection.start, result.selection.end)
+          updateActiveFormats()
+        }
+      }, 0)
+    },
+    [title, triggerAutosave, pushHistory, updateActiveFormats]
+  )
+
+  const handleToolbarAction = React.useCallback(
+    (action: ToolbarActionType) => {
+      if (viewMode === "preview") {
+        setViewMode("edit")
+      }
+
+      if (action === "undo") {
+        handleUndo()
+        return
+      }
+      if (action === "redo") {
+        handleRedo()
+        return
+      }
+
+      const textarea = textareaRef.current
+      const start = textarea?.selectionStart ?? content.length
+      const end = textarea?.selectionEnd ?? content.length
+
+      switch (action) {
+        case "bold":
+          applyFormattingResult(toggleInlineFormat(content, start, end, "**", "**"))
+          break
+        case "italic":
+          applyFormattingResult(toggleInlineFormat(content, start, end, "*", "*"))
+          break
+        case "underline":
+          applyFormattingResult(toggleUnderline(content, start, end))
+          break
+        case "strikethrough":
+          applyFormattingResult(toggleInlineFormat(content, start, end, "~~", "~~"))
+          break
+        case "code":
+          applyFormattingResult(toggleInlineFormat(content, start, end, "`", "`"))
+          break
+        case "h1":
+          applyFormattingResult(toggleHeading(content, start, end, 1))
+          break
+        case "h2":
+          applyFormattingResult(toggleHeading(content, start, end, 2))
+          break
+        case "h3":
+          applyFormattingResult(toggleHeading(content, start, end, 3))
+          break
+        case "bulletList":
+          applyFormattingResult(toggleList(content, start, end, "bullet"))
+          break
+        case "numberList":
+          applyFormattingResult(toggleList(content, start, end, "number"))
+          break
+        case "taskList":
+          applyFormattingResult(toggleList(content, start, end, "task"))
+          break
+        case "quote":
+          applyFormattingResult(toggleBlockquote(content, start, end))
+          break
+        case "codeBlock":
+          applyFormattingResult(toggleCodeBlock(content, start, end))
+          break
+        case "table":
+          applyFormattingResult(insertTable(content, start, end))
+          break
+        case "divider":
+          applyFormattingResult(insertHorizontalRule(content, start, end))
+          break
+        case "clearFormatting":
+          applyFormattingResult(clearFormatting(content, start, end))
+          break
+        case "link": {
+          const selectedText = content.slice(start, end).trim()
+          setLinkSelection({ start, end })
+          if (/^https?:\/\//i.test(selectedText)) {
+            setLinkUrl(selectedText)
+            setLinkTitle("")
+          } else {
+            setLinkUrl("https://")
+            setLinkTitle(selectedText)
+          }
+          setShowLinkDialog(true)
+          break
+        }
+      }
+    },
+    [viewMode, content, handleUndo, handleRedo, applyFormattingResult]
+  )
+
+  const handleLinkSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setShowLinkDialog(false)
+    const result = insertLink(
+      content,
+      linkSelection.start,
+      linkSelection.end,
+      linkUrl,
+      linkTitle
+    )
+    applyFormattingResult(result)
+  }
+
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value
     setContent(newContent)
     triggerAutosave(title, newContent)
+    const start = e.target.selectionStart
+    const end = e.target.selectionEnd
+    pushHistory(newContent, start, end)
+    updateActiveFormats()
+  }
+
+  const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const isCmd = e.metaKey || e.ctrlKey
+
+    // Indent / outdent with Tab
+    if (e.key === "Tab") {
+      e.preventDefault()
+      const textarea = textareaRef.current
+      const start = textarea?.selectionStart ?? 0
+      const end = textarea?.selectionEnd ?? 0
+      applyFormattingResult(indentLines(content, start, end, e.shiftKey))
+      return
+    }
+
+    if (isCmd && !e.shiftKey && e.key.toLowerCase() === "b") {
+      e.preventDefault()
+      handleToolbarAction("bold")
+    } else if (isCmd && !e.shiftKey && e.key.toLowerCase() === "i") {
+      e.preventDefault()
+      handleToolbarAction("italic")
+    } else if (isCmd && !e.shiftKey && e.key.toLowerCase() === "u") {
+      e.preventDefault()
+      handleToolbarAction("underline")
+    } else if (isCmd && !e.shiftKey && e.key.toLowerCase() === "k") {
+      e.preventDefault()
+      handleToolbarAction("link")
+    } else if (isCmd && e.shiftKey && e.key.toLowerCase() === "x") {
+      e.preventDefault()
+      handleToolbarAction("strikethrough")
+    } else if (isCmd && !e.shiftKey && e.key.toLowerCase() === "e") {
+      e.preventDefault()
+      handleToolbarAction("code")
+    } else if (isCmd && !e.shiftKey && e.key.toLowerCase() === "z") {
+      e.preventDefault()
+      handleUndo()
+    } else if (
+      (isCmd && e.shiftKey && e.key.toLowerCase() === "z") ||
+      (isCmd && e.key.toLowerCase() === "y")
+    ) {
+      e.preventDefault()
+      handleRedo()
+    }
   }
 
   // Handle setting password lock
@@ -568,12 +836,25 @@ function NoteEditorInner({
         </div>
       </div>
 
+      {/* Formatting Toolbar Strip on Top */}
+      <EditorToolbar
+        onAction={handleToolbarAction}
+        activeFormats={activeFormats}
+        canUndo={canUndo}
+        canRedo={canRedo}
+      />
+
       {/* Main Body: Markdown Textarea or Safe Preview */}
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
         {viewMode === "edit" ? (
           <textarea
+            ref={textareaRef}
             value={content}
             onChange={handleContentChange}
+            onSelect={updateActiveFormats}
+            onKeyUp={updateActiveFormats}
+            onClick={updateActiveFormats}
+            onKeyDown={handleTextareaKeyDown}
             placeholder="Start writing markdown... Use # for headings, - for lists, `code`, **bold**, or links."
             className="w-full h-full min-h-[350px] resize-none bg-transparent border-none outline-hidden font-mono text-base sm:text-xs leading-relaxed text-foreground placeholder:text-muted-foreground/40 selection:bg-primary/20"
             autoFocus
@@ -744,6 +1025,65 @@ function NoteEditorInner({
                 ) : (
                   <span>Remove Lock</span>
                 )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Insert Link Dialog */}
+      <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-foreground">
+              <LinkIcon className="size-4 text-primary" />
+              <DialogTitle>Insert Link</DialogTitle>
+            </div>
+            <DialogDescription>
+              Add a web link to your note.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleLinkSubmit} className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-xs font-mono text-muted-foreground">
+                Link Text
+              </label>
+              <Input
+                type="text"
+                value={linkTitle}
+                onChange={(e) => setLinkTitle(e.target.value)}
+                placeholder="Text to display..."
+                className="text-base sm:text-xs font-mono"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-mono text-muted-foreground">
+                URL
+              </label>
+              <Input
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://example.com"
+                className="text-base sm:text-xs font-mono"
+                required
+                autoFocus
+              />
+            </div>
+
+            <DialogFooter className="mt-4 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowLinkDialog(false)}
+                className="font-mono text-xs"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" className="font-mono text-xs">
+                Insert Link
               </Button>
             </DialogFooter>
           </form>

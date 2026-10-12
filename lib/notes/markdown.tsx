@@ -58,7 +58,19 @@ export function renderInlineMarkdown(text: string): React.ReactNode[] {
       continue
     }
 
-    // 2. Bold: **text** or __text__
+    // 2. Underline: <u>text</u> or <ins>text</ins>
+    const underlineMatch = remaining.match(/^<(u|ins)>(.*?)<\/\1>/i)
+    if (underlineMatch && underlineMatch[2]) {
+      elements.push(
+        <u key={key++} className="underline underline-offset-3 text-foreground">
+          {renderInlineMarkdown(underlineMatch[2])}
+        </u>
+      )
+      remaining = remaining.slice(underlineMatch[0].length)
+      continue
+    }
+
+    // 3. Bold: **text** or __text__
     const boldMatch = remaining.match(/^(\*\*|__)(.*?)\1/)
     if (boldMatch && boldMatch[2]) {
       elements.push(
@@ -70,7 +82,7 @@ export function renderInlineMarkdown(text: string): React.ReactNode[] {
       continue
     }
 
-    // 3. Strikethrough: ~~text~~
+    // 4. Strikethrough: ~~text~~
     const strikeMatch = remaining.match(/^~~(.*?)~~/)
     if (strikeMatch && strikeMatch[1]) {
       elements.push(
@@ -82,7 +94,7 @@ export function renderInlineMarkdown(text: string): React.ReactNode[] {
       continue
     }
 
-    // 4. Italic: *text* or _text_
+    // 5. Italic: *text* or _text_
     const italicMatch = remaining.match(/^(\*|_)(.*?)\1/)
     if (italicMatch && italicMatch[2]) {
       elements.push(
@@ -94,7 +106,7 @@ export function renderInlineMarkdown(text: string): React.ReactNode[] {
       continue
     }
 
-    // 5. Links: [label](url)
+    // 6. Links: [label](url)
     const linkMatch = remaining.match(/^\[([^\]]+)\]\(([^)]+)\)/)
     if (linkMatch) {
       const safeHref = sanitizeUrl(linkMatch[2])
@@ -114,7 +126,7 @@ export function renderInlineMarkdown(text: string): React.ReactNode[] {
     }
 
     // Find the next special character index
-    const nextSpecialIndex = remaining.search(/[`*_~\[]/)
+    const nextSpecialIndex = remaining.search(/[`*_~\[<]/)
     if (nextSpecialIndex === -1) {
       // No more markdown symbols, append remaining text as safe text node
       elements.push(<React.Fragment key={key++}>{remaining}</React.Fragment>)
@@ -343,13 +355,78 @@ export function MarkdownPreview({ content, className }: MarkdownPreviewProps) {
       continue
     }
 
-    // 7. Blank Lines
+    // 7. Tables: | col1 | col2 |
+    if (
+      line.trim().startsWith("|") &&
+      line.trim().endsWith("|") &&
+      i + 1 < lines.length &&
+      /^\s*\|(\s*:?-+:?\s*\|)+\s*$/.test(lines[i + 1])
+    ) {
+      const headerLine = line
+      i += 2 // skip header and separator
+
+      const parseCells = (rowText: string) => {
+        const parts = rowText.trim().replace(/^\|/, "").replace(/\|$/, "").split("|")
+        return parts.map((p) => p.trim())
+      }
+
+      const headers = parseCells(headerLine)
+      const tableRows: string[][] = []
+
+      while (
+        i < lines.length &&
+        lines[i].trim().startsWith("|") &&
+        lines[i].trim().endsWith("|")
+      ) {
+        tableRows.push(parseCells(lines[i]))
+        i++
+      }
+
+      blocks.push(
+        <div
+          key={blockKey++}
+          className="my-3 overflow-x-auto rounded-lg border border-border/70 bg-card shadow-2xs"
+        >
+          <table className="w-full text-xs text-left border-collapse">
+            <thead className="bg-muted/60 border-b border-border/60">
+              <tr>
+                {headers.map((h, hIdx) => (
+                  <th
+                    key={hIdx}
+                    className="px-3 py-2 font-semibold text-foreground border-r border-border/40 last:border-r-0"
+                  >
+                    {renderInlineMarkdown(h)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/40">
+              {tableRows.map((r, rIdx) => (
+                <tr key={rIdx} className="hover:bg-muted/20 transition-colors">
+                  {r.map((cell, cIdx) => (
+                    <td
+                      key={cIdx}
+                      className="px-3 py-2 text-foreground/90 border-r border-border/40 last:border-r-0"
+                    >
+                      {renderInlineMarkdown(cell)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+      continue
+    }
+
+    // 8. Blank Lines
     if (!line.trim()) {
       i++
       continue
     }
 
-    // 8. Standard Paragraph
+    // 9. Standard Paragraph
     const paragraphLines: string[] = []
     while (
       i < lines.length &&

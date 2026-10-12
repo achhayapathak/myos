@@ -951,8 +951,8 @@ function NoteEditorInner({
       {/* Share Dialog */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader className="gap-1 pb-3 border-b border-border/60">
-            <div className="flex items-center justify-between">
+          <DialogHeader className="gap-1 pb-3 border-b border-border/60 pr-8">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground uppercase tracking-widest">
                 <Globe className="size-3.5 text-primary" />
                 <span>Public Share</span>

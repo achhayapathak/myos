@@ -44,22 +44,11 @@ describe("PWA Specification & Implementation Tests", () => {
       expect(hasSvg).toBe(true)
     })
 
-    it("ensures public/manifest.webmanifest exists and matches specifications", () => {
+    it("ensures public/manifest.webmanifest does not conflict with app/manifest.ts", () => {
       const manifestPath = path.join(rootDir, "public/manifest.webmanifest")
-      expect(fs.existsSync(manifestPath)).toBe(true)
-
-      const raw = fs.readFileSync(manifestPath, "utf-8")
-      const parsed = JSON.parse(raw)
-
-      expect(parsed.name).toBe("MyOS — Personal Operating System")
-      expect(parsed.short_name).toBe("MyOS")
-      expect(parsed.start_url).toBe("/today")
-      expect(parsed.display).toBe("standalone")
-      expect(parsed.background_color).toBe("#171717")
-      expect(parsed.theme_color).toBe("#171717")
-      expect(parsed.icons).toBeDefined()
-      expect(Array.isArray(parsed.icons)).toBe(true)
-      expect(parsed.icons.length).toBeGreaterThanOrEqual(4)
+      // Next.js App Router serves /manifest.webmanifest dynamically from app/manifest.ts.
+      // Having a duplicate file in public/ causes a fatal conflicting-public-file-page runtime error.
+      expect(fs.existsSync(manifestPath)).toBe(false)
     })
   })
 

@@ -181,7 +181,7 @@ myos/
 │
 ├── public/
 │   ├── icons/
-│   └── manifest.webmanifest
+│   └── sw.js
 │
 ├── tests/
 │   ├── unit/

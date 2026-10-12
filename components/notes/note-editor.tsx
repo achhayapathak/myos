@@ -18,9 +18,11 @@ import {
   Globe,
   Copy,
   Link2Off,
+  ExternalLink,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -321,14 +323,18 @@ function NoteEditorInner({
   const [localIsShared, setLocalIsShared] = React.useState(Boolean(note.is_shared))
   const [localShareToken, setLocalShareToken] = React.useState<string | null>(note.share_token ?? null)
 
-  // Resolve the current origin client-side only to avoid SSR/client hydration mismatch.
-  // Initialising to "" ensures server and client render identically on first pass.
-  const [origin, setOrigin] = React.useState("")
-  React.useEffect(() => {
-    setOrigin(window.location.origin)
-  }, [])
+  // Resolve client-side origin safely without SSR hydration mismatch or setState in effect
+  const origin = React.useSyncExternalStore(
+    () => () => {},
+    () => window.location.origin,
+    () => ""
+  )
 
-  const shareUrl = localShareToken ? `${origin}/share/${localShareToken}` : null
+  const shareUrl = localShareToken
+    ? origin
+      ? `${origin}/share/${localShareToken}`
+      : `/share/${localShareToken}`
+    : null
 
 
   const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null)
@@ -945,63 +951,137 @@ function NoteEditorInner({
       {/* Share Dialog */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="flex items-center gap-2 text-foreground">
-              <Globe className="size-4 text-blue-500" />
-              <DialogTitle>Share Note</DialogTitle>
+          <DialogHeader className="gap-1 pb-3 border-b border-border/60">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground uppercase tracking-widest">
+                <Globe className="size-3.5 text-primary" />
+                <span>Public Share</span>
+              </div>
+              {localIsShared ? (
+                <Badge
+                  variant="outline"
+                  className="font-mono text-[10px] py-0 px-2 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 gap-1.5 font-normal"
+                >
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Active
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="font-mono text-[10px] py-0 px-2 text-muted-foreground gap-1.5 font-normal"
+                >
+                  <span className="size-1.5 rounded-full bg-muted-foreground/40" />
+                  Private
+                </Badge>
+              )}
             </div>
-            <DialogDescription>
+            <DialogTitle className="text-lg font-bold tracking-tight">
+              {localIsShared ? "Shared Note Link" : "Share Note"}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
               {localIsShared
-                ? "This note is publicly shared. Anyone with the link can view it in read-only mode."
-                : "Generate a shareable link so anyone can view this note. The link reflects the latest content."}
+                ? "Anyone with the link can view a read-only markdown rendering of this note."
+                : "Publish a secret read-only link to share this note without requiring an account."}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-1 min-w-0">
             {localIsShared && shareUrl ? (
               <>
                 {/* Link display */}
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-muted/60 border border-border/60 font-mono text-xs text-foreground/80 truncate">
-                    {shareUrl}
+                <div className="space-y-1.5 min-w-0">
+                  <label className="text-xs font-mono text-muted-foreground flex items-center justify-between">
+                    <span>Shareable Link</span>
+                    <span className="text-[10px] text-muted-foreground/70">Read-only access</span>
+                  </label>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <div className="relative flex-1 min-w-0">
+                      <input
+                        type="text"
+                        readOnly
+                        value={shareUrl}
+                        onClick={(e) => e.currentTarget.select()}
+                        className="w-full h-9 rounded-lg bg-muted/40 border border-border/60 px-3 font-mono text-xs text-foreground select-all truncate outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                        aria-label="Share URL"
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 px-3 font-mono text-xs cursor-pointer shrink-0 gap-1.5"
+                      onClick={async () => {
+                        const fullUrl = shareUrl.startsWith("http")
+                          ? shareUrl
+                          : `${window.location.origin}${shareUrl}`
+                        await navigator.clipboard.writeText(fullUrl)
+                        setCopiedLink(true)
+                        setTimeout(() => setCopiedLink(false), 2000)
+                      }}
+                      aria-label="Copy share link"
+                    >
+                      {copiedLink ? (
+                        <>
+                          <Check className="size-3.5 text-emerald-500" />
+                          <span className="text-emerald-500 font-medium">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="size-3.5" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </Button>
+
+                    <a
+                      href={shareUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        buttonVariants({ variant: "outline", size: "icon-sm" }),
+                        "size-9 shrink-0 cursor-pointer text-muted-foreground hover:text-foreground inline-flex items-center justify-center"
+                      )}
+                      title="Open public link in new tab"
+                      aria-label="Open public link in new tab"
+                    >
+                      <ExternalLink className="size-3.5" />
+                    </a>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 font-mono text-xs h-9 cursor-pointer"
-                    onClick={async () => {
-                      await navigator.clipboard.writeText(shareUrl)
-                      setCopiedLink(true)
-                      setTimeout(() => setCopiedLink(false), 2000)
-                    }}
-                    aria-label="Copy share link"
-                  >
-                    {copiedLink ? (
-                      <><Check className="size-3.5 text-emerald-500" /><span className="ml-1">Copied!</span></>
-                    ) : (
-                      <><Copy className="size-3.5" /><span className="ml-1">Copy</span></>
-                    )}
-                  </Button>
+                </div>
+
+                {/* Read-only info callout card */}
+                <div className="rounded-lg border border-border/50 bg-muted/20 p-3 text-xs flex items-start gap-2.5">
+                  <Eye className="size-3.5 text-primary shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Anyone with this link can view the note formatted as markdown. Future edits you make update automatically.
+                  </p>
                 </div>
 
                 {shareError && (
-                  <p className="text-xs font-mono text-destructive flex items-center gap-1.5">
+                  <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 p-2.5 text-xs text-destructive font-mono">
                     <AlertCircle className="size-3.5 shrink-0" />
                     <span>{shareError}</span>
-                  </p>
+                  </div>
                 )}
 
-                <div className="pt-1 border-t border-border/40 flex items-center justify-between gap-2">
-                  <p className="text-[11px] font-mono text-muted-foreground">
-                    Revoking the link will make it inaccessible immediately.
-                  </p>
+                <DialogFooter className="flex items-center justify-between sm:justify-between pt-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowShareDialog(false)}
+                    className="font-mono text-xs h-8 cursor-pointer"
+                  >
+                    Done
+                  </Button>
+
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     disabled={isUnsharing}
-                    className="shrink-0 font-mono text-xs h-8 text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10 cursor-pointer"
+                    className="h-8 font-mono text-xs text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10 cursor-pointer gap-1.5"
                     onClick={async () => {
                       setIsUnsharing(true)
                       setShareError(null)
@@ -1010,7 +1090,6 @@ function NoteEditorInner({
                         if (ok) {
                           setLocalIsShared(false)
                           setLocalShareToken(null)
-                          setShowShareDialog(false)
                         } else {
                           setShareError("Failed to revoke share link.")
                         }
@@ -1022,40 +1101,72 @@ function NoteEditorInner({
                     }}
                   >
                     {isUnsharing ? (
-                      <><Loader2 className="size-3 animate-spin" /><span className="ml-1">Revoking...</span></>
+                      <>
+                        <Loader2 className="size-3 animate-spin" />
+                        <span>Revoking...</span>
+                      </>
                     ) : (
-                      <><Link2Off className="size-3" /><span className="ml-1">Revoke</span></>
+                      <>
+                        <Link2Off className="size-3" />
+                        <span>Revoke Link</span>
+                      </>
                     )}
                   </Button>
-                </div>
+                </DialogFooter>
               </>
             ) : (
               <>
-                <p className="text-xs font-mono text-muted-foreground">
-                  The link will always show the latest version of this note.
-                  You can revoke it at any time.
-                </p>
+                <div className="rounded-lg border border-border/50 bg-muted/20 p-3 space-y-2.5 text-xs">
+                  <div className="flex items-start gap-2.5">
+                    <div className="p-1.5 rounded-md bg-primary/10 text-primary shrink-0 mt-0.5">
+                      <Globe className="size-4" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-semibold text-foreground text-xs">Public Read-Only Access</p>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        Generate a unique link so anyone can view this note in clean markdown format, similar to a GitHub Gist.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-border/40 space-y-1.5 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Check className="size-3 text-emerald-500 shrink-0" />
+                      <span>Viewers do not need a MyOS account</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="size-3 text-emerald-500 shrink-0" />
+                      <span>Always displays latest saved edits</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="size-3 text-emerald-500 shrink-0" />
+                      <span>Revoke and invalidate the link anytime</span>
+                    </div>
+                  </div>
+                </div>
 
                 {shareError && (
-                  <p className="text-xs font-mono text-destructive flex items-center gap-1.5">
+                  <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 p-2.5 text-xs text-destructive font-mono">
                     <AlertCircle className="size-3.5 shrink-0" />
                     <span>{shareError}</span>
-                  </p>
+                  </div>
                 )}
 
-                <DialogFooter>
+                <DialogFooter className="pt-2">
                   <Button
                     type="button"
                     variant="outline"
+                    size="sm"
                     onClick={() => setShowShareDialog(false)}
-                    className="font-mono text-xs"
+                    className="font-mono text-xs h-8"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="button"
+                    size="sm"
                     disabled={isSharing}
-                    className="font-mono text-xs cursor-pointer"
+                    className="font-mono text-xs h-8 cursor-pointer gap-1.5"
                     onClick={async () => {
                       setIsSharing(true)
                       setShareError(null)
@@ -1075,9 +1186,15 @@ function NoteEditorInner({
                     }}
                   >
                     {isSharing ? (
-                      <><Loader2 className="size-3 animate-spin mr-1.5" /><span>Generating...</span></>
+                      <>
+                        <Loader2 className="size-3.5 animate-spin mr-1" />
+                        <span>Generating...</span>
+                      </>
                     ) : (
-                      <><Globe className="size-3 mr-1.5" /><span>Generate Link</span></>
+                      <>
+                        <Globe className="size-3.5 mr-1" />
+                        <span>Create Share Link</span>
+                      </>
                     )}
                   </Button>
                 </DialogFooter>

@@ -144,6 +144,14 @@ describe("Today Dashboard Unit Tests", () => {
       expect(noonRes.meridiem).toBe("PM")
     })
 
+    it("verifies components/today/digital-clock.tsx avoids unstable useSyncExternalStore loops (React Error #185)", () => {
+      const filePath = path.join(rootDir, "components/today/digital-clock.tsx")
+      const content = fs.readFileSync(filePath, "utf-8")
+      // Must not directly return Date.now() from getClockSnapshot, which changes every millisecond and triggers Error #185
+      expect(content).not.toMatch(/function getClockSnapshot\(\)\s*\{\s*return Date\.now\(\)/)
+      expect(content).toContain("currentClockSnapshot")
+    })
+
     it("verifies Today page renders TodayReminders instead of HighPriorityTasks under habits", () => {
       const pagePath = path.join(rootDir, "app/(app)/today/page.tsx")
       const content = fs.readFileSync(pagePath, "utf-8")

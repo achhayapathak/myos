@@ -27,13 +27,43 @@ export function formatDigitalClock(date: Date, timeZone = "Asia/Kolkata") {
   }
 }
 
+let currentClockSnapshot = Date.now()
+const clockListeners = new Set<() => void>()
+let clockIntervalId: ReturnType<typeof setInterval> | null = null
+
+function updateClockSnapshot() {
+  currentClockSnapshot = Date.now()
+  for (const listener of clockListeners) {
+    listener()
+  }
+}
+
 function subscribeToClock(callback: () => void) {
-  const interval = setInterval(callback, 1000)
-  return () => clearInterval(interval)
+  clockListeners.add(callback)
+  if (clockListeners.size === 1) {
+    clockIntervalId = setInterval(updateClockSnapshot, 1000)
+    if (typeof window !== "undefined") {
+      window.addEventListener("focus", updateClockSnapshot)
+      document.addEventListener("visibilitychange", updateClockSnapshot)
+    }
+  }
+  return () => {
+    clockListeners.delete(callback)
+    if (clockListeners.size === 0) {
+      if (clockIntervalId !== null) {
+        clearInterval(clockIntervalId)
+        clockIntervalId = null
+      }
+      if (typeof window !== "undefined") {
+        window.removeEventListener("focus", updateClockSnapshot)
+        document.removeEventListener("visibilitychange", updateClockSnapshot)
+      }
+    }
+  }
 }
 
 function getClockSnapshot() {
-  return Date.now()
+  return currentClockSnapshot
 }
 
 const SERVER_TIME = Date.now()

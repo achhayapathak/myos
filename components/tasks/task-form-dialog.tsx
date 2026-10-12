@@ -16,6 +16,7 @@ import type { Task, TaskPriority, TaskStatus } from "@/types/database"
 import { createTask, updateTask } from "@/app/(app)/tasks/actions"
 import { AlertCircle, Calendar, Clock, Loader2, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { DatePicker } from "@/components/ui/date-picker"
 
 interface TaskFormDialogProps {
   open: boolean
@@ -308,12 +309,12 @@ function TaskFormContent({ taskToEdit, onOpenChange, onSuccess }: InnerFormProps
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Input
-              type="date"
+            <DatePicker
+              id="task-due-date"
               value={dueDateStr}
-              onChange={(e) => setDueDateStr(e.target.value)}
+              onChange={setDueDateStr}
               disabled={isSubmitting}
-              className="text-base sm:text-xs"
+              placeholder="Select due date"
             />
             <div className="flex items-center gap-1.5">
               <Clock className="size-3.5 text-muted-foreground shrink-0" />

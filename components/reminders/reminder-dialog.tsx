@@ -32,6 +32,7 @@ import {
   Globe,
   Sparkles,
 } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 
 interface ReminderDialogProps {
   open: boolean
@@ -277,13 +278,13 @@ function ReminderDialogInner({
             <label htmlFor="reminder-date" className="text-xs font-medium text-foreground">
               Scheduled Date <span className="text-destructive">*</span>
             </label>
-            <Input
-              type="date"
+            <DatePicker
               id="reminder-date"
               value={scheduledDate}
-              onChange={(e) => setScheduledDate(e.target.value)}
+              onChange={setScheduledDate}
               disabled={loading || deleting}
-              className="font-mono text-base sm:text-xs"
+              placeholder="Select scheduled date"
+              required
             />
           </div>
 

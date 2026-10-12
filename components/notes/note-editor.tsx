@@ -321,9 +321,15 @@ function NoteEditorInner({
   const [localIsShared, setLocalIsShared] = React.useState(Boolean(note.is_shared))
   const [localShareToken, setLocalShareToken] = React.useState<string | null>(note.share_token ?? null)
 
-  const shareUrl = localShareToken
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/share/${localShareToken}`
-    : null
+  // Resolve the current origin client-side only to avoid SSR/client hydration mismatch.
+  // Initialising to "" ensures server and client render identically on first pass.
+  const [origin, setOrigin] = React.useState("")
+  React.useEffect(() => {
+    setOrigin(window.location.origin)
+  }, [])
+
+  const shareUrl = localShareToken ? `${origin}/share/${localShareToken}` : null
+
 
   const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null)
 

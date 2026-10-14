@@ -7,7 +7,7 @@ const screenshots = [
   {
     id: "today",
     label: "Today",
-    src: "/images/myos/today.png",
+    src: "/images/myos/today-preview.png",
     caption:
       "Everything that matters today — tasks, reminders, events, and focus sessions in one view.",
   },

@@ -208,7 +208,7 @@ export default async function LandingPage() {
                   {/* Screenshot Image */}
                   <div className="relative aspect-[16/10] sm:aspect-[16/10] w-full overflow-hidden bg-neutral-950">
                     <Image
-                      src="/images/myos/today.png"
+                      src="/images/myos/today-preview.png"
                       alt="MyOS Today dashboard showing clock, daily priorities, Pomodoro timer, and upcoming reminders"
                       width={1440}
                       height={900}

@@ -40,7 +40,6 @@ describe("Authentication & Route Protection", () => {
   describe("1. Unauthenticated Route Protection", () => {
     it("redirects unauthenticated users from protected dashboard routes to /login", () => {
       const protectedRoutes = [
-        "/",
         "/today",
         "/tasks",
         "/notes",
@@ -52,6 +51,14 @@ describe("Authentication & Route Protection", () => {
 
       for (const route of protectedRoutes) {
         expect(getAuthRedirect(route, null)).toBe("/login")
+      }
+    })
+
+    it("allows unauthenticated users to access public landing and legal routes", () => {
+      const publicLandingRoutes = ["/", "/privacy"]
+
+      for (const route of publicLandingRoutes) {
+        expect(getAuthRedirect(route, null)).toBeNull()
       }
     })
 

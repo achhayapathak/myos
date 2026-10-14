@@ -22,6 +22,7 @@ All migrations are designed to be **idempotent** (`IF NOT EXISTS`, `OR REPLACE`)
 | **6** | `20261004000000_habits.sql` | Creates `habits` and `habit_completions` tables with RLS policies, indexes, and cascades. |
 | **7** | `20261004000001_pomodoro_pause.sql` | Adds `paused_at` column to `pomodoro_sessions` for pause and resume tracking. |
 | **8** | `20261004000002_habit_reminders.sql` | Adds optional `reminder_time` column to `habits` and adds habit notification preferences to `profiles`. |
+| **9** | `20261014000000_waitlist.sql` | Creates `waitlist` table (with email unique constraint and status check) and `waitlist_rate_limits` table with RLS enabled and no public policies (service-role admin access only). |
 
 ---
 

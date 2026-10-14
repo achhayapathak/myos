@@ -23,8 +23,12 @@ export function getAuthRedirect(pathname: string, user: User | null): string | n
     pathname === "/offline" ||
     pathname === "/favicon.ico"
 
+  const isLandingPage =
+    pathname === "/" ||
+    pathname === "/privacy"
+
   // Unauthenticated user attempting to access protected route
-  if (!user && !isAuthRoute && !isPublicAsset) {
+  if (!user && !isAuthRoute && !isPublicAsset && !isLandingPage) {
     return "/login"
   }
 

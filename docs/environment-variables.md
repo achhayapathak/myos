@@ -17,6 +17,7 @@ This document provides a comprehensive guide to all environment variables used b
 | `PLAYWRIGHT_BASE_URL` | Testing (E2E) | Node / CI | Optional | Target URL for Playwright tests (defaults to `http://localhost:3000`) |
 | `E2E_TEST_EMAIL` | Testing (E2E) | Node / CI | Optional | Test user account email for automated E2E test runs |
 | `E2E_TEST_PASSWORD` | Testing (E2E) | Node / CI | Optional | Test user account password for automated E2E test runs |
+| `NEXT_PUBLIC_SITE_URL` | All | Client & Server | Optional | Canonical public production URL used for OpenGraph, Twitter cards, and sitemaps (defaults to `https://myos.app`) |
 
 ---
 

@@ -9,19 +9,21 @@ This guide details the deployment of MyOS to production using Vercel (recommende
 Before deploying to production, ensure you have completed the following steps:
 
 - [ ] **All migrations applied to production Supabase**:
-  Check `docs/migrations.md` to ensure all 5 migration files are applied.
-- [ ] **Row Level Security active on all 8 tables**:
-  Run `node scripts/check-supabase.mjs` against production credentials.
+  Check `docs/migrations.md` to ensure all 9 migration files are applied (including `20261014000000_waitlist.sql`).
+- [ ] **Row Level Security active on all tables**:
+  Run `node scripts/check-supabase.mjs` against production credentials. Waitlist table has RLS enabled with zero public access policies.
 - [ ] **Supabase Auth public signups disabled**:
   Verify in Supabase Dashboard (**Authentication** → **Signups** → **Allow new users to sign up**: `OFF`).
 - [ ] **All tests passing**:
-  `pnpm run test` (390+ tests passing).
+  `pnpm run test` (570+ tests passing).
 - [ ] **TypeScript & Lint clean**:
   `pnpm run typecheck` and `pnpm run lint` succeed with 0 errors.
 - [ ] **Production build verified**:
   `pnpm run build` succeeds locally.
 - [ ] **VAPID keys generated**:
   `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` are ready.
+- [ ] **Production Site URL configured**:
+  `NEXT_PUBLIC_SITE_URL` set to the custom production domain for canonical SEO and OpenGraph metadata.
 
 ---
 
@@ -48,6 +50,7 @@ Under **Environment Variables**, add:
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `<your-vapid-public-key>` | Production, Preview |
 | `VAPID_PRIVATE_KEY` | `<your-vapid-private-key>` | Production, Preview |
 | `VAPID_SUBJECT` | `mailto:owner@yourdomain.com` | Production, Preview |
+| `NEXT_PUBLIC_SITE_URL` | `https://myos.yourdomain.com` | Production, Preview |
 
 ### Step 2.3: Deploy
 Click **Deploy**. Vercel will run `pnpm install`, `next build`, and deploy the application.

@@ -18,16 +18,16 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://myos.app"
 
   return {
-    title: "MyOS — Your day. Your focus. Your system.",
+    title: "MyOS — Private, Invite-Only Personal Workspace",
     description:
-      "A minimal, private workspace designed to help you organize daily tasks, capture thoughts, run focus sessions, and build routines — without the clutter.",
+      "A minimal, private workspace designed to help you organize daily tasks, capture thoughts, run focus sessions, and build routines — available exclusively by personal invitation.",
     alternates: {
       canonical: siteUrl,
     },
     openGraph: {
-      title: "MyOS — Your day. Your focus. Your system.",
+      title: "MyOS — Private, Invite-Only Personal Workspace",
       description:
-        "A minimal workspace for tasks, notes, habits, and deep work. Everything you need to stay organized, without the noise.",
+        "A private, single-user workspace for tasks, notes, habits, and deep work. Zero tracking, zero ads, available exclusively by invitation.",
       url: siteUrl,
       siteName: "MyOS",
       images: [
@@ -42,9 +42,9 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: "MyOS — Your day. Your focus. Your system.",
+      title: "MyOS — Private, Invite-Only Personal Workspace",
       description:
-        "A minimal, private workspace for tasks, notes, habits, and deep work.",
+        "A private, single-user workspace for tasks, notes, habits, and deep work. Available exclusively by invitation.",
       images: [`${siteUrl}/images/myos/today.png`],
     },
     robots: {
@@ -77,9 +77,9 @@ export default async function LandingPage() {
               </span>
             </Link>
 
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide border border-amber-500/20 bg-amber-500/10 text-amber-300">
-              <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
-              INVITE-ONLY PREVIEW
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide border border-neutral-750 bg-neutral-900/90 text-neutral-300">
+              <span className="size-1.5 rounded-full bg-emerald-400" />
+              PRIVATE · INVITE ONLY
             </span>
           </div>
 
@@ -87,10 +87,10 @@ export default async function LandingPage() {
           <nav className="flex items-center gap-3 sm:gap-6 text-sm">
             <div className="hidden md:flex items-center gap-6 text-neutral-400">
               <a
-                href="#preview"
+                href="#workspace"
                 className="hover:text-white transition-colors"
               >
-                Product
+                Workspace
               </a>
               <a
                 href="#features"
@@ -123,10 +123,10 @@ export default async function LandingPage() {
                   Sign in
                 </Link>
                 <a
-                  href="#waitlist"
+                  href="#invite"
                   className="hidden sm:inline-flex items-center rounded-lg bg-neutral-100 hover:bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-black transition-colors"
                 >
-                  Request access
+                  Request invitation
                 </a>
               </div>
             )}
@@ -149,7 +149,7 @@ export default async function LandingPage() {
               <div className="lg:col-span-6 space-y-6">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-mono font-medium tracking-wider text-neutral-400 uppercase">
-                    PRIVATE PRODUCTIVITY WORKSPACE
+                    PRIVATE SINGLE-USER WORKSPACE
                   </span>
                 </div>
 
@@ -162,8 +162,8 @@ export default async function LandingPage() {
                 </h1>
 
                 <p className="text-base sm:text-lg text-neutral-400 leading-relaxed max-w-xl">
-                  A minimal workspace for tasks, notes, habits, and deep work.
-                  Everything you need to stay organized, without the noise.
+                  A minimal, single-user workspace for tasks, notes, habits, and deep work.
+                  No noise, no feeds, and no subscription bloat — operated exclusively by personal invitation.
                 </p>
 
                 {/* Hero Waitlist Form */}
@@ -184,7 +184,11 @@ export default async function LandingPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="size-1.5 rounded-full bg-neutral-600" />
-                    <span>Zero ad tracking</span>
+                    <span>Strict invitation access</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="size-1.5 rounded-full bg-neutral-600" />
+                    <span>Zero telemetry or tracking</span>
                   </div>
                 </div>
               </div>
@@ -219,25 +223,26 @@ export default async function LandingPage() {
                   </div>
                 </div>
                 <p className="text-xs text-neutral-500 text-center mt-3 font-mono">
-                  Actual Today dashboard — intentional, single-screen clarity.
+                  The Today dashboard — quiet, intentional, single-screen clarity.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* 3. Product Preview Showcase */}
-        <section id="preview" className="py-20 md:py-28 border-b border-neutral-850">
+        {/* 3. Product Workspace Showcase */}
+        <section id="workspace" className="py-20 md:py-28 border-b border-neutral-850">
+          <div id="preview" className="sr-only" />
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
               <span className="text-xs font-mono font-medium tracking-wider text-neutral-400 uppercase">
-                PRODUCT PREVIEW
+                THE WORKSPACE
               </span>
               <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
-                Explore the workspace
+                Inside the private system
               </h2>
               <p className="text-sm sm:text-base text-neutral-400">
-                A cohesive set of tools designed to work seamlessly together in one fast interface.
+                A cohesive set of tools engineered to work seamlessly together in one fast, quiet interface.
               </p>
             </div>
 
@@ -395,14 +400,14 @@ export default async function LandingPage() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="max-w-2xl mx-auto text-center mb-16 space-y-3">
               <span className="text-xs font-mono font-medium tracking-wider text-neutral-400 uppercase">
-                PHILOSOPHY
+                DESIGN PRINCIPLES
               </span>
               <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
                 Built to stay out of your way.
               </h2>
               <p className="text-sm sm:text-base text-neutral-400">
-                Most productivity software demands more maintenance than the work it manages.
-                MyOS adheres to three foundational principles.
+                Most software demands more attention than the work it manages.
+                MyOS adheres to three private computing principles.
               </p>
             </div>
 
@@ -416,8 +421,8 @@ export default async function LandingPage() {
                   Minimal by default
                 </h3>
                 <p className="text-sm text-neutral-400 leading-relaxed">
-                  A clean interface with little visual noise, so the next action is obvious.
-                  No intrusive widgets, banners, or gamified distractions.
+                  A quiet interface with zero visual noise, so the next action is obvious.
+                  No banners, promotional badges, or gamified distractions.
                 </p>
               </div>
 
@@ -427,11 +432,11 @@ export default async function LandingPage() {
                   02
                 </div>
                 <h3 className="text-base font-medium text-white">
-                  Keyboard-first
+                  Keyboard-first speed
                 </h3>
                 <p className="text-sm text-neutral-400 leading-relaxed">
-                  Shortcuts and quick capture reduce unnecessary navigation.
-                  Capture thoughts, switch views, and complete tasks without reaching for the mouse.
+                  Shortcuts and instant capture eliminate friction.
+                  Capture thoughts, switch modules, and complete tasks without touching the mouse.
                 </p>
               </div>
 
@@ -441,46 +446,47 @@ export default async function LandingPage() {
                   03
                 </div>
                 <h3 className="text-base font-medium text-white">
-                  One workspace
+                  Private & sovereign
                 </h3>
                 <p className="text-sm text-neutral-400 leading-relaxed">
-                  Tasks, notes, focus sessions, habits, and reminders work together in one place.
-                  No synchronization lag across multiple disconnected apps.
+                  Your workspace is yours alone. Single-user isolation with PostgreSQL Row Level
+                  Security, zero telemetry, and no ad monetization.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* 6. Invite-Only Positioning & Waitlist CTA */}
-        <section id="waitlist" className="py-20 md:py-28 relative">
+        {/* 6. Invite-Only Positioning & Access Request */}
+        <section id="invite" className="py-20 md:py-28 relative">
+          <div id="waitlist" className="sr-only" />
           <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center space-y-6">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium border border-neutral-800 bg-[#141414] text-neutral-300">
-              <span className="size-1.5 rounded-full bg-amber-400" />
-              INVITATION ACCESS
+              <span className="size-1.5 rounded-full bg-emerald-400" />
+              RESTRICTED ACCESS
             </span>
 
             <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
-              Get an invitation to MyOS.
+              Private by design. Invitation only.
             </h2>
 
             <p className="text-sm sm:text-base text-neutral-400 leading-relaxed max-w-xl mx-auto">
-              Access is currently limited. MyOS is being opened gradually while the
-              product evolves. Leave your email and we&apos;ll contact you when we&apos;re
-              ready to open access.
+              MyOS is intentionally not a mass-market SaaS tool or a public subscription service.
+              It is maintained as a focused, single-user system for individuals who require calm,
+              uncompromised execution. Membership is granted exclusively through personal invitations.
             </p>
 
             <div className="pt-4 max-w-md mx-auto text-left">
               <div className="rounded-xl border border-neutral-800 bg-[#141414] p-4 sm:p-5 shadow-2xl shadow-black/40">
                 <WaitlistForm
-                  buttonText="Join the waitlist"
+                  buttonText="Request an invitation"
                   id="cta"
                 />
               </div>
             </div>
 
             <p className="text-xs text-neutral-500 font-mono pt-4">
-              Single-user application. Built with Next.js, Supabase & TypeScript.
+              Private single-user workspace. Strict Row Level Security. Zero third-party telemetry.
             </p>
           </div>
         </section>
@@ -499,7 +505,7 @@ export default async function LandingPage() {
               </span>
             </div>
             <p className="text-xs text-neutral-500">
-              An independent productivity workspace.
+              A private, single-user productivity workspace.
             </p>
             <p className="text-xs text-neutral-600 font-mono">
               © {new Date().getFullYear()} MyOS. All rights reserved.
@@ -508,10 +514,10 @@ export default async function LandingPage() {
 
           <div className="flex flex-wrap items-center gap-6 text-xs font-mono">
             <a
-              href="#preview"
+              href="#workspace"
               className="hover:text-neutral-200 transition-colors"
             >
-              Product
+              Workspace
             </a>
             <a
               href="#features"
@@ -524,6 +530,12 @@ export default async function LandingPage() {
               className="hover:text-neutral-200 transition-colors"
             >
               Philosophy
+            </a>
+            <a
+              href="#invite"
+              className="hover:text-neutral-200 transition-colors"
+            >
+              Request Invite
             </a>
             <Link
               href="/privacy"

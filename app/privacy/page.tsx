@@ -4,7 +4,7 @@ import { ArrowLeft, Shield } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "Privacy policy for the MyOS waitlist and invitation system.",
+  description: "Privacy policy for the MyOS private invitation system.",
 }
 
 export default function PrivacyPage() {
@@ -53,7 +53,7 @@ export default function PrivacyPage() {
               1. Overview
             </h2>
             <p>
-              MyOS is an independent, single-user personal productivity system designed for focused daily workflows. This Privacy Policy outlines our transparent data handling practices regarding information collected through our public landing page and waitlist invitation form.
+              MyOS is an independent, single-user private productivity system designed for focused daily workflows. This Privacy Policy outlines our transparent data handling practices regarding information collected through our public landing page and private invitation request form.
             </p>
           </section>
 
@@ -66,10 +66,10 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc pl-5 space-y-2 text-neutral-400">
               <li>
-                <strong className="text-neutral-200">Email Address:</strong> Used solely to notify you when invitation access becomes available.
+                <strong className="text-neutral-200">Email Address:</strong> Used solely to deliver your private invitation and personal access credentials.
               </li>
               <li>
-                <strong className="text-neutral-200">Rate-Limiting Hash:</strong> An irreversible cryptographic SHA-256 hash of your client IP address. We do not store plaintext IP addresses. This hash is temporarily recorded to prevent automated spam and denial-of-service abuse.
+                <strong className="text-neutral-200">Rate-Limiting Hash:</strong> An irreversible cryptographic SHA-256 hash of your client IP address. We do not store plaintext IP addresses. This hash is temporarily recorded to prevent automated abuse and denial-of-service attempts.
               </li>
             </ul>
           </section>
@@ -80,11 +80,11 @@ export default function PrivacyPage() {
             </h2>
             <p>We use the collected information exclusively to:</p>
             <ul className="list-disc pl-5 space-y-2 text-neutral-400">
-              <li>Send direct updates regarding your invitation and access status to MyOS.</li>
-              <li>Enforce rate limits on waitlist submissions to maintain service reliability.</li>
+              <li>Deliver your private invitation and access instructions for MyOS.</li>
+              <li>Enforce rate limits on submission requests to maintain service reliability.</li>
             </ul>
             <p>
-              We will never sell, rent, monetize, or disclose your email address or personal details to any third-party marketing services or data brokers.
+              We do not sell subscriptions, display advertisements, or monetize user data. We will never sell, rent, or disclose your email address or personal details to any third-party marketing services or data brokers.
             </p>
           </section>
 
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
               4. Data Retention
             </h2>
             <p>
-              Waitlist entries are retained securely in our PostgreSQL database protected by Row Level Security (RLS) until you request deletion or after the early-access invitation phase concludes. Rate-limiting verification hashes are strictly evaluated within short rolling time windows.
+              Invitation requests are retained securely in our PostgreSQL database protected by Row Level Security (RLS) until you request deletion. Rate-limiting verification hashes are strictly evaluated within short rolling time windows and expire automatically.
             </p>
           </section>
 
@@ -102,7 +102,7 @@ export default function PrivacyPage() {
               5. Deletion & Your Rights
             </h2>
             <p>
-              You maintain full ownership of your data. You may request the permanent removal and deletion of your email from our waitlist database at any time. Simply send an email to{" "}
+              You maintain full ownership of your data. You may request the permanent removal and deletion of your email from our invitation database at any time. Simply send an email to{" "}
               <a
                 href="mailto:info@achhaya.com"
                 className="text-neutral-100 underline underline-offset-4 hover:text-white"
@@ -127,7 +127,7 @@ export default function PrivacyPage() {
               7. Security
             </h2>
             <p>
-              Waitlist records are secured on Supabase PostgreSQL with Row Level Security enabled. Public direct read and write policies are disabled, and all submissions are sanitized, validated, and processed exclusively through isolated server-side routines.
+              Invitation records are secured on Supabase PostgreSQL with Row Level Security enabled. Public direct read and write policies are disabled, and all submissions are sanitized, validated, and processed exclusively through isolated server-side routines.
             </p>
           </section>
 

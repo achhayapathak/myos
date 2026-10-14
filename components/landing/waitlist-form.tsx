@@ -23,7 +23,7 @@ export function WaitlistForm({
             {state.message}
           </p>
           <p className="text-xs text-neutral-500 mt-1">
-            Your email will only be used for MyOS access updates.
+            Your email is only used to deliver your personal invitation and access details.
           </p>
         </div>
       </div>
@@ -61,7 +61,7 @@ export function WaitlistForm({
         <button
           type="submit"
           disabled={isPending}
-          className="h-10 shrink-0 inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-medium text-black transition-all hover:bg-neutral-200 active:translate-y-px disabled:opacity-50 disabled:pointer-events-none"
+          className="h-10 shrink-0 inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-medium text-black transition-all hover:bg-neutral-200 active:translate-y-px disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
         >
           {isPending ? (
             <Loader2 className="size-4 animate-spin" />
@@ -79,7 +79,7 @@ export function WaitlistForm({
       )}
 
       <p className="text-[11px] text-neutral-500 mt-3">
-        No spam. Just an update when access opens.{" "}
+        Private and invite-only. Requests reviewed personally.{" "}
         <Link
           href="/privacy"
           className="underline underline-offset-2 hover:text-neutral-400 transition-colors"

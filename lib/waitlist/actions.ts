@@ -36,7 +36,8 @@ export async function joinWaitlist(
     if (isHoneypot) {
       return {
         success: true,
-        message: "You're on the list. We'll be in touch when invitations open.",
+        message:
+          "Your invitation request has been received. We'll be in touch with your access details.",
       }
     }
     return {
@@ -99,7 +100,7 @@ export async function joinWaitlist(
       return {
         success: true,
         message:
-          "You're on the list. We'll be in touch when invitations open.",
+          "Your invitation request has been received. We'll be in touch with your access details.",
       }
     }
     console.error("Waitlist insert failed:", insertError)
@@ -111,6 +112,7 @@ export async function joinWaitlist(
 
   return {
     success: true,
-    message: "You're on the list. We'll be in touch when invitations open.",
+    message:
+      "Your invitation request has been received. We'll be in touch with your access details.",
   }
 }

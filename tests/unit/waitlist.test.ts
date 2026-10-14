@@ -131,7 +131,8 @@ describe("Waitlist & Landing Page Functionality", () => {
 
       expect(result).toEqual({
         success: true,
-        message: "You're on the list. We'll be in touch when invitations open.",
+        message:
+          "Your invitation request has been received. We'll be in touch with your access details.",
       })
       expect(mockInsert).not.toHaveBeenCalled()
     })
@@ -154,7 +155,8 @@ describe("Waitlist & Landing Page Functionality", () => {
 
       expect(result).toEqual({
         success: true,
-        message: "You're on the list. We'll be in touch when invitations open.",
+        message:
+          "Your invitation request has been received. We'll be in touch with your access details.",
       })
       expect(mockInsert).toHaveBeenCalledWith({ email: "newuser@example.com" })
     })
@@ -177,7 +179,8 @@ describe("Waitlist & Landing Page Functionality", () => {
 
       expect(result).toEqual({
         success: true,
-        message: "You're on the list. We'll be in touch when invitations open.",
+        message:
+          "Your invitation request has been received. We'll be in touch with your access details.",
       })
     })
 

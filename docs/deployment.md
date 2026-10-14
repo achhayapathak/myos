@@ -48,6 +48,7 @@ Under **Environment Variables**, add:
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `<your-vapid-public-key>` | Production, Preview |
 | `VAPID_PRIVATE_KEY` | `<your-vapid-private-key>` | Production, Preview |
 | `VAPID_SUBJECT` | `mailto:owner@yourdomain.com` | Production, Preview |
+| `CRON_SECRET` | `<random-32-char-secret>` | Production, Preview |
 
 ### Step 2.3: Deploy
 Click **Deploy**. Vercel will run `pnpm install`, `next build`, and deploy the application.
@@ -65,6 +66,24 @@ Click **Deploy**. Vercel will run `pnpm install`, `next build`, and deploy the a
 4. Add to **Redirect URLs**:
    - `https://myos.yourdomain.com/auth/callback`
    - `https://myos.yourdomain.com/reset-password`
+
+### Step 2.6: Automated Notifications & Cron Scheduling
+MyOS features automated notifications for:
+- **Habit Reminders**: Morning digest, evening streak saver, and custom habit times (`/api/cron/habit-reminders`).
+- **Scheduled Reminders**: User-scheduled reminders dispatched at their target time (`/api/cron/reminder-dispatch`).
+
+#### Option A: Vercel Pro Plan (Native Vercel Cron)
+If your Vercel project is on the **Pro Plan**, the included `vercel.json` automatically triggers both cron routes every minute (`* * * * *`). Vercel automatically sends the `CRON_SECRET` as a Bearer token in the `Authorization` header.
+
+#### Option B: Vercel Hobby Plan (Free Tier)
+Vercel's Hobby plan restricts native cron jobs to **once per day**. Minute-by-minute reminders require an external scheduler to hit the endpoints:
+1. Create a free account at [cron-job.org](https://cron-job.org).
+2. Create two cron jobs running every minute (or every 5 minutes):
+   - **Job 1**: `https://<your-domain>/api/cron/habit-reminders`
+   - **Job 2**: `https://<your-domain>/api/cron/reminder-dispatch`
+3. Under **Headers**, add:
+   - `Authorization`: `Bearer <your-CRON_SECRET>`
+4. Note: On Vercel Hobby, remove or adjust `vercel.json` if Vercel rejects high-frequency cron definitions during build.
 
 ---
 

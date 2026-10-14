@@ -14,6 +14,7 @@ This document provides a comprehensive guide to all environment variables used b
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | All | Client & Server | Optional | VAPID P-256 public key (base64url) for Web Push subscriptions |
 | `VAPID_PRIVATE_KEY` | All | **Server Only** | Optional | VAPID P-256 private key (base64url) for signing outgoing Web Push notifications |
 | `VAPID_SUBJECT` | All | **Server Only** | Optional | Contact URI (`mailto:` or `https:`) sent to push services (RFC 8292) |
+| `CRON_SECRET` | Production | **Server Only** | Optional | Shared bearer secret for authenticating scheduled cron routes |
 | `PLAYWRIGHT_BASE_URL` | Testing (E2E) | Node / CI | Optional | Target URL for Playwright tests (defaults to `http://localhost:3000`) |
 | `E2E_TEST_EMAIL` | Testing (E2E) | Node / CI | Optional | Test user account email for automated E2E test runs |
 | `E2E_TEST_PASSWORD` | Testing (E2E) | Node / CI | Optional | Test user account password for automated E2E test runs |

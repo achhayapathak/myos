@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/habit-reminders",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/reminder-dispatch",
+      "schedule": "* * * * *"
+    }
+  ]
+}

@@ -10,6 +10,11 @@ const mockInsert = vi.fn()
 const mockSelect = vi.fn()
 const mockEq = vi.fn()
 const mockGte = vi.fn()
+const mockSendNotification = vi.fn().mockResolvedValue({ success: true })
+
+vi.mock("@/lib/email/resend", () => ({
+  sendWaitlistNotification: (...args: unknown[]) => mockSendNotification(...args),
+}))
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
@@ -135,9 +140,10 @@ describe("Waitlist & Landing Page Functionality", () => {
           "Your invitation request has been received. We'll be in touch with your access details.",
       })
       expect(mockInsert).not.toHaveBeenCalled()
+      expect(mockSendNotification).not.toHaveBeenCalled()
     })
 
-    it("successfully persists a valid new email to the waitlist", async () => {
+    it("successfully persists a valid new email to the waitlist and triggers notification", async () => {
       const { joinWaitlist } = await import("@/lib/waitlist/actions")
 
       // Rate limit check returns 0 attempts
@@ -159,9 +165,15 @@ describe("Waitlist & Landing Page Functionality", () => {
           "Your invitation request has been received. We'll be in touch with your access details.",
       })
       expect(mockInsert).toHaveBeenCalledWith({ email: "newuser@example.com" })
+      expect(mockSendNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: "newuser@example.com",
+          isDuplicate: false,
+        })
+      )
     })
 
-    it("handles duplicate email submissions idempotently without revealing status", async () => {
+    it("handles duplicate email submissions idempotently and notifies of repeat interest", async () => {
       const { joinWaitlist } = await import("@/lib/waitlist/actions")
 
       mockGte.mockResolvedValueOnce({ count: 0, error: null })
@@ -182,6 +194,12 @@ describe("Waitlist & Landing Page Functionality", () => {
         message:
           "Your invitation request has been received. We'll be in touch with your access details.",
       })
+      expect(mockSendNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: "existing@example.com",
+          isDuplicate: true,
+        })
+      )
     })
 
     it("enforces rate limits when threshold is exceeded", async () => {
@@ -201,6 +219,7 @@ describe("Waitlist & Landing Page Functionality", () => {
         message: "Too many requests. Please try again later.",
       })
       expect(mockInsert).not.toHaveBeenCalled()
+      expect(mockSendNotification).not.toHaveBeenCalled()
     })
 
     it("handles rate limit database query errors gracefully", async () => {

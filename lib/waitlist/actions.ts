@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { headers } from "next/headers"
 import { createHash } from "crypto"
 import { waitlistEmailSchema, normalizeEmail } from "./validation"
+import { sendWaitlistNotification } from "@/lib/email/resend"
 
 const RATE_LIMIT_WINDOW_MINUTES = 15
 const RATE_LIMIT_MAX_ATTEMPTS = 5
@@ -97,6 +98,11 @@ export async function joinWaitlist(
     // Unique constraint violation — email already registered
     // Return success to avoid revealing whether the email exists
     if (insertError.code === "23505") {
+      // Trigger notification for repeat interest (non-blocking)
+      sendWaitlistNotification({ email, ip, isDuplicate: true }).catch((err) =>
+        console.error("Waitlist repeat notification error:", err)
+      )
+
       return {
         success: true,
         message:
@@ -109,6 +115,11 @@ export async function joinWaitlist(
       message: "Something went wrong. Please try again later.",
     }
   }
+
+  // Trigger notification email for new invitation request via Resend
+  await sendWaitlistNotification({ email, ip, isDuplicate: false }).catch((err) =>
+    console.error("Waitlist notification error:", err)
+  )
 
   return {
     success: true,

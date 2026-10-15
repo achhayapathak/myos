@@ -114,7 +114,6 @@ export function ScreenshotShowcase() {
           height={900}
           className="w-full h-auto"
           priority={current.id === "today"}
-          quality={90}
         />
       </div>
 
